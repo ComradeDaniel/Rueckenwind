@@ -51,6 +51,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.sqldelight.android.driver)
+            implementation("org.maplibre.gl:android-sdk-opengl:13.0.2")
         }
         val androidHostTest by getting {
             dependencies {
@@ -77,6 +78,10 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
+            implementation("org.maplibre.compose:maplibre-compose:0.13.0") {
+                exclude(group = "org.maplibre.gl", module = "android-sdk")
+            }
+            implementation(libs.compose.material.icons.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
