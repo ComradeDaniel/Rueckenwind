@@ -14,7 +14,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -88,11 +90,10 @@ fun WindradMap(
                     val x = screenCoord.x
                     val y = screenCoord.y
 
-                    val left = x - 22.dp
-                    val top = y - 52.dp
+                    val left = x - 19.dp
+                    val top = y - 41.dp
 
                     WindradPin(
-                        count = pin.count,
                         modifier = Modifier.offset(x = left, y = top)
                     )
                 }
@@ -108,21 +109,19 @@ private data class PinData(
 
 @Composable
 private fun WindradPin(
-    count: Int,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .width(44.dp)
-            .height(56.dp),
+            .width(38.dp)
+            .height(41.dp),
         contentAlignment = Alignment.TopCenter
     ) {
-        // 1. Droplet Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
             val circleRadius = 16.dp.toPx()
             val centerX = size.width / 2f
-            val centerY = circleRadius + 2.dp.toPx() // offset from top for border
-            val tipY = size.height - 4.dp.toPx() // offset from bottom for shadow/border
+            val centerY = circleRadius + 1.dp.toPx() // Slight offset from top
+            val tipY = size.height - 2.dp.toPx() // Bottom tip
             
             val path = Path().apply {
                 addArc(
@@ -132,68 +131,103 @@ private fun WindradPin(
                         centerX + circleRadius,
                         centerY + circleRadius
                     ),
-                    startAngleDegrees = 45f,
-                    sweepAngleDegrees = -270f
+                    startAngleDegrees = 40f,
+                    sweepAngleDegrees = -260f
                 )
+                // Curve down to the tip
                 lineTo(centerX, tipY)
                 close()
             }
 
             // Draw soft shadow under the droplet tip
             drawCircle(
-                color = Color.Black.copy(alpha = 0.2f),
-                radius = 4.dp.toPx(),
+                color = Color.Black.copy(alpha = 0.15f),
+                radius = 3.dp.toPx(),
                 center = androidx.compose.ui.geometry.Offset(centerX, tipY + 1.dp.toPx())
             )
 
-            // Draw primary blue fill
+            // Draw white fill (the outer droplet)
             drawPath(
                 path = path,
-                color = Color(0xFF1D7AED)
+                color = Color.White
             )
 
-            // Draw white border
-            drawPath(
-                path = path,
+            // Draw inner primary blue circle
+            drawCircle(
+                color = Color(0xFF007AFF), // Bright iOS-like blue
+                radius = 12.dp.toPx(),
+                center = androidx.compose.ui.geometry.Offset(centerX, centerY)
+            )
+
+            // Draw Wind Turbine Icon (White)
+            // The icon in Figma is exactly 10x15 dp.
+            // We draw it centered within the blue circle.
+            val iconWidth = 10.dp.toPx()
+            val iconHeight = 15.dp.toPx()
+            
+            // The center of the wind turbine's rotor is about 37.5% down from its top
+            val rotorCx = centerX
+            val rotorCy = centerY - (iconHeight / 2f) + (iconHeight * 0.375f)
+            val rotorCenter = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy)
+
+            val stroke = 1.8.dp.toPx()
+            val gap = 1.0.dp.toPx()
+            val dotRadius = 0.9.dp.toPx()
+            val bladeLen = 3.5.dp.toPx()
+            val poleLen = 7.0.dp.toPx()
+
+            // Center dot
+            drawCircle(
                 color = Color.White,
-                style = Stroke(
-                    width = 2.5.dp.toPx(),
-                    join = StrokeJoin.Round
+                radius = dotRadius,
+                center = rotorCenter
+            )
+
+            val bladeStartOffset = dotRadius + gap
+
+            // Top blade
+            drawLine(
+                color = Color.White,
+                start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset),
+                end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset - bladeLen),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+
+            // Pole (pointing down)
+            drawLine(
+                color = Color.White,
+                start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy + bladeStartOffset),
+                end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy + bladeStartOffset + poleLen),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+
+            // Right blade (120 degrees)
+            withTransform({
+                rotate(120f, rotorCenter)
+            }) {
+                drawLine(
+                    color = Color.White,
+                    start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset),
+                    end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset - bladeLen),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round
                 )
-            )
-        }
+            }
 
-        // 2. Wind Turbine Icon (❃)
-        Box(
-            modifier = Modifier
-                .padding(top = 2.dp) // aligns inside the circle centerY
-                .size(32.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "❃",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        // 3. Badge with Number at top-right
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(end = 2.dp, top = 2.dp)
-                .size(18.dp)
-                .background(Color.White, CircleShape)
-                .border(BorderStroke(1.5.dp, Color(0xFF1D7AED)), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = count.toString(),
-                color = Color(0xFF1D7AED),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
+            // Left blade (-120 degrees)
+            withTransform({
+                rotate(-120f, rotorCenter)
+            }) {
+                drawLine(
+                    color = Color.White,
+                    start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset),
+                    end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset - bladeLen),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round
+                )
+            }
         }
     }
 }
