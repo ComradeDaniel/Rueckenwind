@@ -2,6 +2,7 @@ package org.example.project
 
 import com.windrad.data.calculatePeriodAndDate
 import com.windrad.data.calculateHouseholdsFedText
+import com.windrad.data.calculateRotorComparisonText
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -87,5 +88,17 @@ class SharedCommonTest {
             onshoreOffshoreType = "Windkraft an Land"
         )
         assertEquals("Versorgt: Wert leider nicht bekannt", text)
+    }
+
+    @Test
+    fun testRotorComparisonValid() {
+        val text = calculateRotorComparisonText(diameter = 126.0)
+        assertEquals("126m ~ 1,7 Fußballfelder", text)
+    }
+
+    @Test
+    fun testRotorComparisonNull() {
+        val text = calculateRotorComparisonText(diameter = null)
+        assertEquals("Wert leider nicht bekannt", text)
     }
 }

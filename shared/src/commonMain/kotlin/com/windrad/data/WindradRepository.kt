@@ -90,11 +90,16 @@ class WindradRepository(private val db: WindradDatabase) {
             onshoreOffshoreType = row.onshore_offshore_type
         )
         
+        val rotorText = calculateRotorComparisonText(
+            diameter = row.turbine_rotor_diameter
+        )
+        
         WindmillDetails(
             name = displayName,
             operatingStatus = operatingStatus,
             commissioningDate = commissioningDate,
-            householdsFedText = householdsText
+            householdsFedText = householdsText,
+            rotorComparisonText = rotorText
         )
     }
 
@@ -206,4 +211,18 @@ internal fun calculateHouseholdsFedText(
     val fullLoadHours = if (isOnshore) 1770 else 3278
     val households = ((netCapacity * fullLoadHours) / 2277.0).roundToInt()
     return "Versorgt ca. $households Haushalte (${netCapacity.toInt()}kW)"
+}
+
+internal fun calculateRotorComparisonText(
+    diameter: Double?
+): String {
+    if (diameter == null) return "Wert leider nicht bekannt"
+    val radius = diameter / 2.0
+    val area = radius * radius * kotlin.math.PI
+    val fields = area / 7140.0
+    val rounded = (fields * 10.0).roundToInt()
+    val integerPart = rounded / 10
+    val fractionalPart = kotlin.math.abs(rounded % 10)
+    val formattedFields = "$integerPart,$fractionalPart"
+    return "${diameter.toInt()}m ~ $formattedFields Fußballfelder"
 }
