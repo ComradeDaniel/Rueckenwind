@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +29,7 @@ import org.maplibre.compose.sources.GeoJsonOptions
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.util.ClickResult
+import org.maplibre.compose.expressions.value.TranslateAnchor
 import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
 
@@ -122,31 +124,18 @@ fun WindradMap(
                 // ── Anchoring custom layers at the top ─────────────────────────────
                 org.maplibre.compose.layers.Anchor.Top {
 
-                    // ── Layer 1: Cluster-Kreise ─────────────────────────────────────────────
+                    // ── Layer 1: Cluster-Basis (Windrad-Pin) ────────────────────────────────
                     // Filter: nur Features mit point_count-Property (= vom Engine erzeugte Cluster)
-                    CircleLayer(
-                        id = "windrad-clusters",
+                    // Zeigt das Standard-Windrad-Pin für alle Cluster
+                    SymbolLayer(
+                        id = "windrad-cluster-base",
                         source = source,
                         filter = feature.has("point_count"),
-                        // Radius wächst mit der Cluster-Größe
-                        radius = step(
-                            input = feature["point_count"].asNumber(),
-                            fallback = const(18.dp),
-                            10 to const(24.dp),
-                            100 to const(30.dp),
-                            1000 to const(38.dp),
+                        iconImage = image(
+                            value = windradPinPainter,
+                            size = DpSize(38.dp, 41.dp),
                         ),
-                        // Farbe wechselt mit der Cluster-Größe (blauer Farbverlauf)
-                        color = step(
-                            input = feature["point_count"].asNumber(),
-                            fallback = const(Color(0xFF1565C0)),   // Dunkelblau < 10
-                            10 to const(Color(0xFF1976D2)),        // Mittelblau 10–99
-                            100 to const(Color(0xFF0288D1)),       // Hellblau 100–999
-                            1000 to const(Color(0xFF006064)),      // Teal >= 1000
-                        ),
-                        strokeWidth = const(2.dp),
-                        strokeColor = const(Color.White),
-                        opacity = const(0.92f),
+                        iconAllowOverlap = const(true),
                         onClick = { features ->
                             // Cluster-Klick: zur nächsten Zoom-Stufe zoomen, bei der der Cluster auflöst
                             val clickedFeature = features.firstOrNull()
@@ -165,22 +154,68 @@ fun WindradMap(
                         }
                     )
 
-                    // ── Layer 2: Cluster-Zähler-Text ───────────────────────────────────────
-                    // Zeigt die Anzahl geclusterter Punkte über dem Kreis
-                    SymbolLayer(
-                        id = "windrad-cluster-count",
+                    // ── Layer 2: Cluster-Badge (Weißer Kreis im Vordergrund) ────────────────
+                    // Zeichnet einen weißen Kreis mit blauem Rand am oberen rechten Rand des Pins
+                    CircleLayer(
+                        id = "windrad-cluster-badge",
                         source = source,
                         filter = feature.has("point_count"),
-                        // point_count_abbreviated: z.B. "1.2k" statt "1200"
+                        radius = step(
+                            input = feature["point_count"].asNumber(),
+                            fallback = const(11.dp),
+                            10 to const(13.dp),
+                            100 to const(15.dp),
+                            1000 to const(17.dp)
+                        ),
+                        color = const(Color.White),
+                        strokeWidth = const(0.dp),
+                        strokeColor = const(Color.Transparent),
+                        opacity = const(1.0f),
+                        translate = const(DpOffset(16.dp, -16.dp)),
+                        translateAnchor = const(TranslateAnchor.Viewport),
+                    )
+
+                    val count = feature["point_count"].asNumber()
+                    val scaledValue = round(count / const(100f))
+                    val integerPart = floor(scaledValue / const(10f))
+                    val remainder = scaledValue % const(10)
+
+                    // ── Layer 3: Cluster-Badge-Zähler (Zahl im weißen Kreis) ───────────────
+                    // Zeigt die Anzahl geclusterter Punkte über dem Badge-Kreis
+                    SymbolLayer(
+                        id = "windrad-cluster-badge-count",
+                        source = source,
+                        filter = feature.has("point_count"),
                         textField = format(
-                            span(feature["point_count_abbreviated"].asString())
+                            span(
+                                switch(
+                                    condition(
+                                        test = count lt const(1000f),
+                                        output = count.convertToString()
+                                    ),
+                                    condition(
+                                        test = count lt const(10000f),
+                                        output = switch(
+                                            condition(
+                                                test = remainder eq const(0),
+                                                output = integerPart.convertToString() + const("k")
+                                            ),
+                                            fallback = integerPart.convertToString() + const(".") + remainder.convertToString() + const("k")
+                                        )
+                                    ),
+                                    fallback = round(count / const(1000f)).convertToString() + const("k")
+                                )
+                            )
                         ),
                         textFont = const(listOf("Noto Sans Bold")),
-                        textColor = const(Color.White),
-                        textSize = const(13.sp),
+                        textColor = const(Color(0xFF007AFF)), // Blau
+                        textSize = const(10.5.sp),
                         textHaloColor = const(Color.Transparent),
                         textAllowOverlap = const(true),
+                        textIgnorePlacement = const(true),
                         iconAllowOverlap = const(true),
+                        textTranslate = const(DpOffset(16.dp, -16.dp)),
+                        textTranslateAnchor = const(TranslateAnchor.Viewport),
                     )
 
                     // ── Layer 3: Einzelne Windräder (WindradPin-Icon) ──────────────────────

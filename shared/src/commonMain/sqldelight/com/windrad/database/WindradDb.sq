@@ -143,3 +143,69 @@ selectAllComparableSights:
 SELECT *
 FROM comparable_sights
 ORDER BY height;
+
+-- Zoom-basierte Aggregationsabfragen für Karten-Clustering
+
+selectWindmillCoordinates:
+SELECT
+    w.unit_MaStR_ID AS id,
+    w.unit_display_name AS label,
+    w.latitude_wgs84 AS latitude,
+    w.longitude_wgs84 AS longitude,
+    IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL;
+
+countWindmillsByFederalState:
+SELECT
+    w.federal_state AS id,
+    w.federal_state AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.federal_state IS NOT NULL AND w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY w.federal_state;
+
+countWindmillsByDistrict:
+SELECT
+    w.district AS id,
+    w.district AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.district IS NOT NULL AND w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY w.district;
+
+countWindmillsByMunicipality:
+SELECT
+    w.municipality AS id,
+    w.municipality AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.municipality IS NOT NULL AND w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY w.municipality;
+
+countWindmillsByWindPark:
+SELECT
+    COALESCE(NULLIF(w.wind_plant_name, ''), w.unit_MaStR_ID) AS id,
+    COALESCE(NULLIF(w.wind_plant_name, ''), w.unit_display_name, w.unit_MaStR_ID) AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY COALESCE(NULLIF(w.wind_plant_name, ''), w.unit_MaStR_ID);
+
