@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.windrad.ui.theme.AppColors
 
 @Composable
 fun WindradBottomBar(
@@ -32,7 +33,7 @@ fun WindradBottomBar(
             .fillMaxWidth()
             .height(64.dp),
         shape = RoundedCornerShape(32.dp),
-        color = Color(0xF2FFFFFF), // 95% White Glass (brighter and more opaque)
+        color = AppColors.WhiteGlass,
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.8f)), // sharp white glass border edge
         shadowElevation = 16.dp // High elevation to cast shadow onto the bottom sheet
     ) {
@@ -43,7 +44,7 @@ fun WindradBottomBar(
         ) {
             WindradDestination.entries.forEach { destination ->
                 val selected = currentDestination == destination
-                val contentColor = if (selected) MaterialTheme.colorScheme.primary else Color(0xFF565E71)
+                val contentColor = if (selected) MaterialTheme.colorScheme.primary else AppColors.SubtitleText
                 
                 Box(
                     modifier = Modifier
@@ -54,7 +55,7 @@ fun WindradBottomBar(
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        color = if (selected) Color(0x14000000) else Color.Transparent,
+                        color = if (selected) AppColors.SelectedItemOverlay else Color.Transparent,
                         shape = RoundedCornerShape(percent = 50)
                     ) {
                         Column(

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.PI
+import com.windrad.ui.theme.AppColors
 
 /**
  * Reusable data model representing the details of a wind turbine.
@@ -62,14 +63,14 @@ fun WindmillDetailsCard(
             Column {
                 Text(
                     text = details.operatingStatus,
-                    color = Color(0xFF1A1C1E),
+                    color = AppColors.DarkText,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = (-0.43).sp
                 )
                 Text(
                     text = details.commissioningDate,
-                    color = Color(0xFF565E71),
+                    color = AppColors.SubtitleText,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Normal,
                     letterSpacing = (-0.23).sp
@@ -82,7 +83,7 @@ fun WindmillDetailsCard(
         // ── 2. Middle Row: Households and capacity ───────────────────────────
         Text(
             text = details.householdsFedText,
-            color = Color(0xFF1A1C1E),
+            color = AppColors.DarkText,
             fontSize = 17.sp,
             fontWeight = FontWeight.Normal,
             letterSpacing = (-0.43).sp,
@@ -98,7 +99,7 @@ fun WindmillDetailsCard(
         ) {
             Text(
                 text = "Abmessungen:",
-                color = Color(0xFF1A1C1E),
+                color = AppColors.DarkText,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = (-0.43).sp
@@ -128,7 +129,7 @@ fun WindmillDetailsCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = details.heightComparisonText,
-                        color = Color(0xFF1A1C1E),
+                        color = AppColors.DarkText,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Normal,
                         lineHeight = 18.sp,
@@ -156,7 +157,7 @@ fun WindmillDetailsCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = details.rotorComparisonText,
-                        color = Color(0xFF1A1C1E),
+                        color = AppColors.DarkText,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Normal,
                         lineHeight = 18.sp,
@@ -175,7 +176,7 @@ fun WindmillDetailsCard(
         ) {
             Text(
                 text = "Technik:",
-                color = Color(0xFF1A1C1E),
+                color = AppColors.DarkText,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = (-0.43).sp
@@ -199,7 +200,7 @@ fun WindmillDetailsCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = details.technologyText,
-                        color = Color(0xFF1A1C1E),
+                        color = AppColors.DarkText,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Normal
                     )
@@ -219,7 +220,7 @@ fun WindmillDetailsCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = details.locationText,
-                        color = Color(0xFF1A1C1E),
+                        color = AppColors.DarkText,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Normal
                     )
@@ -235,7 +236,7 @@ fun WindmillDetailsCard(
 fun LightningIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val radius = size.minDimension / 2f
-        val color = Color(0xFF1D7AED)
+        val color = AppColors.Blue
         
         // Circular border & light blue background fill
         drawCircle(color = color.copy(alpha = 0.12f))
@@ -258,7 +259,7 @@ fun LightningIcon(modifier: Modifier = Modifier) {
 @Composable
 fun WindTurbineIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val color = Color(0xFF565E71)
+        val color = AppColors.SubtitleText
         val strokeWidth = 2.2.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height * 0.35f
@@ -281,7 +282,7 @@ fun WindTurbineIcon(modifier: Modifier = Modifier) {
 @Composable
 fun WindTurbineRotorIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val color = Color(0xFF565E71)
+        val color = AppColors.SubtitleText
         val strokeWidth = 2.2.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height * 0.35f
@@ -312,7 +313,7 @@ fun WindTurbineRotorIcon(modifier: Modifier = Modifier) {
 @Composable
 fun KölnerDomIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val color = Color(0xFF565E71)
+        val color = AppColors.SubtitleText
         val strokeWidth = 1.5.dp.toPx()
         
         val leftTowerX = size.width * 0.3f
@@ -345,7 +346,7 @@ fun KölnerDomIcon(modifier: Modifier = Modifier) {
 @Composable
 fun SoccerFieldIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val color = Color(0xFF565E71)
+        val color = AppColors.SubtitleText
         val strokeWidth = 1.5.dp.toPx()
         
         // Pitch border
@@ -388,8 +389,8 @@ fun SoccerFieldIcon(modifier: Modifier = Modifier) {
 @Composable
 fun WindTurbineHorizontalIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val color = Color(0xFF565E71)
-        val blue = Color(0xFF1D7AED)
+        val color = AppColors.SubtitleText
+        val blue = AppColors.Blue
         val strokeWidth = 1.5.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height / 2f
@@ -424,7 +425,7 @@ fun WindTurbineHorizontalIcon(modifier: Modifier = Modifier) {
 @Composable
 fun WindTurbineLocationIcon(isOnshore: Boolean, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val color = Color(0xFF565E71)
+        val color = AppColors.SubtitleText
         val strokeWidth = 2.2.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height * 0.35f

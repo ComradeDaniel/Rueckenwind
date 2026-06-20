@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.windrad.ui.theme.AppColors
 
 @Composable
 fun MapScreen(
@@ -170,7 +171,7 @@ fun MapScreen(
                 .fillMaxWidth()
                 .height(sheetHeight),
             shape = RoundedCornerShape(40.dp),
-            color = Color(0xF2FFFFFF), // 95% White Glass for uniform milky effect
+            color = AppColors.WhiteGlass, // 95% White Glass for uniform milky effect
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)), // sharp white glass border edge
             shadowElevation = 12.dp // stronger shadow to create height hierarchy
         ) {
@@ -247,7 +248,7 @@ fun MapScreen(
                         ) {
                             Text(
                                 text = uiState.selectedWindmill.name,
-                                color = Color(0xFF1A1A1A),
+                                color = AppColors.PureDark,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = (-0.43).sp,
@@ -264,13 +265,13 @@ fun MapScreen(
                                 },
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .background(Color(0xFFE5E5EA), CircleShape)
+                                    .background(AppColors.LightGray, CircleShape)
                                     .align(Alignment.CenterEnd)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Schließen",
-                                    tint = Color(0xFF3C3C43).copy(alpha = 0.6f),
+                                    tint = AppColors.DarkGray.copy(alpha = 0.6f),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -295,14 +296,14 @@ fun MapScreen(
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .fillMaxWidth(progress)
-                                    .background(Color(0xFF1D7AED), RoundedCornerShape(3.dp))
+                                    .background(AppColors.Blue, RoundedCornerShape(3.dp))
                             )
                         }
                     } else {
                         // Windpark count label
                         Text(
                             text = "${uiState.windparkCount} Windparks",
-                            color = Color(0xFF1A1C1E),
+                            color = AppColors.DarkText,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -349,7 +350,7 @@ fun MapScreen(
                                 text = "In deiner Nähe",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1A1C1E)
+                                color = AppColors.DarkText
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
@@ -371,7 +372,7 @@ fun MapScreen(
                                 text = "In deiner Nähe",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1A1C1E)
+                                color = AppColors.DarkText
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
@@ -402,7 +403,7 @@ fun MapScreen(
                                             Surface(
                                                 modifier = Modifier.size(40.dp),
                                                 shape = RoundedCornerShape(8.dp),
-                                                color = Color(0xFF1D7AED)
+                                                color = AppColors.Blue
                                             ) {
                                                 Box(contentAlignment = Alignment.Center) {
                                                     Text("🛩", fontSize = 18.sp, color = Color.White)
@@ -414,7 +415,7 @@ fun MapScreen(
                                                     text = item.name,
                                                     fontSize = 15.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF1A1C1E)
+                                                    color = AppColors.DarkText
                                                 )
                                                 Text(
                                                     text = item.details,
@@ -423,12 +424,12 @@ fun MapScreen(
                                                 )
                                             }
                                             Surface(
-                                                color = Color(0xFFE2F0D9),
+                                                color = AppColors.ActiveBadgeBg,
                                                 shape = RoundedCornerShape(8.dp)
                                             ) {
                                                 Text(
                                                     text = item.status,
-                                                    color = Color(0xFF385723),
+                                                    color = AppColors.ActiveBadgeText,
                                                     fontSize = 12.sp,
                                                     fontWeight = FontWeight.SemiBold,
                                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -465,7 +466,7 @@ fun MapScreen(
         Button(
             onClick = onScanClicked,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF1D7AED) // Primary Blue
+                containerColor = AppColors.Blue
             ),
             shape = RoundedCornerShape(25.dp),
             modifier = Modifier

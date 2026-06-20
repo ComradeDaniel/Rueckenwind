@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.windrad.ui.theme.AppColors
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.*
@@ -86,10 +87,10 @@ fun WindradMap(
     }
 
     // WindradPin-Varianten als Painter-Objekte für die MapLibre-Sprite-Registrierung.
-    val pinBlue = remember { WindradPinPainter(Color(0xFF0088FF)) }
-    val pinGreen = remember { WindradPinPainter(Color(0xFF34C759)) }
-    val pinYellow = remember { WindradPinPainter(Color(0xFFFFCC00)) }
-    val pinGray = remember { WindradPinPainter(Color(0xFFB3B3B3)) }
+    val pinBlue = remember { WindradPinPainter(AppColors.MapsBlue) }
+    val pinGreen = remember { WindradPinPainter(AppColors.Green) }
+    val pinYellow = remember { WindradPinPainter(AppColors.Yellow) }
+    val pinGray = remember { WindradPinPainter(AppColors.Gray) }
 
     if (windmillGeoJson == null) {
         androidx.compose.foundation.layout.Box(
@@ -97,7 +98,7 @@ fun WindradMap(
             contentAlignment = androidx.compose.ui.Alignment.Center
         ) {
             androidx.compose.material3.CircularProgressIndicator(
-                color = androidx.compose.ui.graphics.Color(0xFF007AFF)
+                color = AppColors.AccentBlue
             )
         }
     } else {
@@ -211,7 +212,7 @@ fun WindradMap(
                             )
                         ),
                         textFont = const(listOf("Noto Sans Bold")),
-                        textColor = const(Color(0xFF007AFF)), // Blau
+                        textColor = const(AppColors.AccentBlue),
                         textSize = const(10.5.sp),
                         textHaloColor = const(Color.Transparent),
                         textAllowOverlap = const(true),
