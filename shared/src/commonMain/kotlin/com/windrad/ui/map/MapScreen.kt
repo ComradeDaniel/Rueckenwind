@@ -232,7 +232,13 @@ fun MapScreen(
                                 modifier = Modifier.padding(horizontal = 44.dp)
                             )
                             IconButton(
-                                onClick = { onWindmillSelected(null) },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        isExpanded = false
+                                        sheetOffsetY.animateTo(collapsedOffsetPx, animationSpec = tween(300))
+                                        onWindmillSelected(null)
+                                    }
+                                },
                                 modifier = Modifier
                                     .size(36.dp)
                                     .background(Color(0xFFE5E5EA), CircleShape)
