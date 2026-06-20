@@ -104,7 +104,7 @@ fun WindradMap(
             modifier = modifier.fillMaxSize(),
             cameraState = cameraState,
             options = MapOptions(ornamentOptions = OrnamentOptions.AllDisabled),
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/bright"),
+            baseStyle = BaseStyle.Uri("https://raw.githubusercontent.com/kalwinskidawid/openfreemap-translations/main/styles/liberty_de.json"),
             onMapLoadFinished = {
                 println("WindradMap: onMapLoadFinished fired!")
                 isMapLoaded = true
