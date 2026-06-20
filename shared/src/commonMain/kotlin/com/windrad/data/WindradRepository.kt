@@ -57,6 +57,10 @@ class WindradRepository(private val db: WindradDatabase) {
                 append(""","name":""")
                 append(jsonString(row.label))
 
+                // Status
+                append(""","status":""")
+                append(jsonString(row.status))
+
                 // Sammelstatus – GRUNDLAGE für spätere farbliche Unterscheidung (gesammelt = grün)
                 // 0 = nicht gesammelt, 1 = gesammelt
                 // Für Farbgebung in WindradMap.kt: filter = feature["collected"].asNumber() eq const(1f)

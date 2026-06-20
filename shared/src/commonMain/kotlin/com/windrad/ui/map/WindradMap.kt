@@ -85,10 +85,11 @@ fun WindradMap(
         onZoomChanged(cameraState.position.zoom)
     }
 
-    // WindradPin als Painter-Objekt für MapLibre-Sprite-Registrierung.
-    // Die maplibre-compose image(Painter)-API rendert diesen Painter zu einem Bitmap
-    // und registriert ihn automatisch als Sprite im MapLibre-Style.
-    val windradPinPainter = remember { WindradPinPainter(isCollected = false) }
+    // WindradPin-Varianten als Painter-Objekte für die MapLibre-Sprite-Registrierung.
+    val pinBlue = remember { WindradPinPainter(Color(0xFF0088FF)) }
+    val pinGreen = remember { WindradPinPainter(Color(0xFF34C759)) }
+    val pinYellow = remember { WindradPinPainter(Color(0xFFFFCC00)) }
+    val pinGray = remember { WindradPinPainter(Color(0xFFB3B3B3)) }
 
     if (windmillGeoJson == null) {
         androidx.compose.foundation.layout.Box(
@@ -124,6 +125,10 @@ fun WindradMap(
 
                 // ── Anchoring custom layers at the top ─────────────────────────────
                 org.maplibre.compose.layers.Anchor.Top {
+                    val imgBlue = image(pinBlue, DpSize(38.dp, 41.dp))
+                    val imgGreen = image(pinGreen, DpSize(38.dp, 41.dp))
+                    val imgYellow = image(pinYellow, DpSize(38.dp, 41.dp))
+                    val imgGray = image(pinGray, DpSize(38.dp, 41.dp))
 
                     // ── Layer 1: Cluster-Basis (Windrad-Pin) ────────────────────────────────
                     // Filter: nur Features mit point_count-Property (= vom Engine erzeugte Cluster)
@@ -132,10 +137,7 @@ fun WindradMap(
                         id = "windrad-cluster-base",
                         source = source,
                         filter = feature.has("point_count"),
-                        iconImage = image(
-                            value = windradPinPainter,
-                            size = DpSize(38.dp, 41.dp),
-                        ),
+                        iconImage = imgBlue,
                         iconAllowOverlap = const(true),
                         onClick = { features ->
                             // Cluster-Klick: zur nächsten Zoom-Stufe zoomen, bei der der Cluster auflöst
@@ -226,9 +228,16 @@ fun WindradMap(
                         id = "windrad-single",
                         source = source,
                         filter = !feature.has("point_count"),
-                        iconImage = image(
-                            value = windradPinPainter,
-                            size = DpSize(38.dp, 41.dp),
+                        iconImage = switch(
+                            condition(
+                                test = feature["status"].asString() eq const("In Planung"),
+                                output = imgYellow
+                            ),
+                            condition(
+                                test = feature["status"].asString() eq const("In Betrieb"),
+                                output = imgGreen
+                            ),
+                            fallback = imgGray
                         ),
                         iconAllowOverlap = const(true),
                         onClick = { features ->
@@ -258,7 +267,7 @@ fun WindradMap(
  *
  * @param isCollected true = grüner Pin (gesammelt), false = blauer Pin (noch nicht gesammelt)
  */
-class WindradPinPainter(val isCollected: Boolean) : Painter() {
+class WindradPinPainter(val pinColor: Color) : Painter() {
 
     // Intrinsische Größe des Pins in Pixeln (wird durch die DpSize in image() überschrieben)
     override val intrinsicSize = Size(38f, 41f)
@@ -293,8 +302,7 @@ class WindradPinPainter(val isCollected: Boolean) : Painter() {
         }
         drawPath(path = path, color = Color.White)
 
-        // ── Pin-Farbkreis (Blau = ungesammelt, Grün = gesammelt) ─────────────
-        val pinColor = if (isCollected) Color(0xFF34C759) else Color(0xFF007AFF)
+        // ── Pin-Farbkreis ────────────────────────────────────────────────────
         drawCircle(
             color = pinColor,
             radius = 12.dp.toPx(),
