@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.windrad.ui.navigation.WindradBottomBar
 import com.windrad.ui.navigation.WindradDestination
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 
@@ -62,18 +64,23 @@ fun MapScreen(
         
         // Define bottom sheet heights and offsets
         val collapsedHeight = 166.dp
-        val expandedHeight = screenHeight - 100.dp
+        val maxExpandedHeight = screenHeight - 100.dp
         
         val collapsedOffsetPx = with(density) { (screenHeight - collapsedHeight).toPx() }
-        val expandedOffsetPx = with(density) { 100.dp.toPx() }
+        val maxExpandedOffsetPx = with(density) { 100.dp.toPx() }
+        
+        var detailsCardHeightDp by remember { mutableStateOf(300.dp) }
+        val contentHeight = (detailsCardHeightDp + 193.dp).coerceAtMost(screenHeight - 100.dp)
+        val contentOffsetPx = with(density) { (screenHeight - contentHeight).toPx() }
         
         // Draggable sheet offset state
-        var isExpanded by remember { mutableStateOf(false) }
+        var sheetState by remember { mutableStateOf(SheetState.COLLAPSED) }
         val sheetOffsetY = remember { Animatable(collapsedOffsetPx) }
         
         // Calculate expansion progress (0f = collapsed, 1f = fully expanded)
-        val progress = remember(collapsedOffsetPx, expandedOffsetPx, sheetOffsetY.value) {
-            val range = collapsedOffsetPx - expandedOffsetPx
+        val progress = remember(collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value) {
+            val targetOffset = if (uiState.selectedWindmill != null) contentOffsetPx else maxExpandedOffsetPx
+            val range = collapsedOffsetPx - targetOffset
             if (range > 0f) {
                 ((collapsedOffsetPx - sheetOffsetY.value) / range).coerceIn(0f, 1f)
             } else {
@@ -82,8 +89,12 @@ fun MapScreen(
         }
         
         // Sync offset when state or constraints change
-        LaunchedEffect(isExpanded, collapsedOffsetPx, expandedOffsetPx) {
-            val target = if (isExpanded) expandedOffsetPx else collapsedOffsetPx
+        LaunchedEffect(sheetState, collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx) {
+            val target = when (sheetState) {
+                SheetState.COLLAPSED -> collapsedOffsetPx
+                SheetState.HALF_EXPANDED -> contentOffsetPx
+                SheetState.FULLY_EXPANDED -> maxExpandedOffsetPx
+            }
             sheetOffsetY.animateTo(target, animationSpec = tween(300))
         }
 
@@ -96,11 +107,7 @@ fun MapScreen(
             onZoomChanged = { /* Zoom-Änderungen für zukünftige Features nutzbar */ },
             onWindmillClicked = { id ->
                 onWindmillSelected(id)
-                // Automatically expand the sheet
-                coroutineScope.launch {
-                    isExpanded = true
-                    sheetOffsetY.animateTo(expandedOffsetPx, animationSpec = tween(300))
-                }
+                sheetState = SheetState.HALF_EXPANDED
             },
             modifier = Modifier.fillMaxSize()
         )
@@ -175,20 +182,32 @@ fun MapScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .pointerInput(collapsedOffsetPx, expandedOffsetPx) {
+                        .pointerInput(collapsedOffsetPx, maxExpandedOffsetPx, contentOffsetPx) {
                             detectDragGestures(
                                 onDragEnd = {
-                                    val midpoint = (collapsedOffsetPx + expandedOffsetPx) / 2
-                                    isExpanded = sheetOffsetY.value < midpoint
+                                    val targets = if (uiState.selectedWindmill != null) {
+                                        listOf(
+                                            collapsedOffsetPx to SheetState.COLLAPSED,
+                                            contentOffsetPx to SheetState.HALF_EXPANDED,
+                                            maxExpandedOffsetPx to SheetState.FULLY_EXPANDED
+                                        )
+                                    } else {
+                                        listOf(
+                                            collapsedOffsetPx to SheetState.COLLAPSED,
+                                            maxExpandedOffsetPx to SheetState.FULLY_EXPANDED
+                                        )
+                                    }
+                                    val closest = targets.minByOrNull { kotlin.math.abs(sheetOffsetY.value - it.first) } 
+                                        ?: (collapsedOffsetPx to SheetState.COLLAPSED)
+                                    sheetState = closest.second
                                     coroutineScope.launch {
-                                        val target = if (isExpanded) expandedOffsetPx else collapsedOffsetPx
-                                        sheetOffsetY.animateTo(target, animationSpec = tween(250))
+                                        sheetOffsetY.animateTo(closest.first, animationSpec = tween(250))
                                     }
                                 },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
                                     val newOffset = (sheetOffsetY.value + dragAmount.y)
-                                        .coerceIn(expandedOffsetPx, collapsedOffsetPx)
+                                        .coerceIn(maxExpandedOffsetPx, collapsedOffsetPx)
                                     coroutineScope.launch {
                                         sheetOffsetY.snapTo(newOffset)
                                     }
@@ -199,7 +218,11 @@ fun MapScreen(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) {
-                            isExpanded = !isExpanded
+                            sheetState = if (sheetState == SheetState.COLLAPSED) {
+                                if (uiState.selectedWindmill != null) SheetState.HALF_EXPANDED else SheetState.FULLY_EXPANDED
+                            } else {
+                                SheetState.COLLAPSED
+                            }
                         }
                         .padding(top = 10.dp, bottom = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -234,8 +257,8 @@ fun MapScreen(
                             IconButton(
                                 onClick = {
                                     coroutineScope.launch {
-                                        isExpanded = false
-                                        sheetOffsetY.animateTo(collapsedOffsetPx, animationSpec = tween(300))
+                                        sheetState = SheetState.COLLAPSED
+                                        delay(300)
                                         onWindmillSelected(null)
                                     }
                                 },
@@ -304,9 +327,13 @@ fun MapScreen(
                         ) {
                             WindmillDetailsCard(
                                 details = uiState.selectedWindmill,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onGloballyPositioned { coordinates ->
+                                        detailsCardHeightDp = with(density) { coordinates.size.height.toDp() }
+                                    }
                             )
-                            Spacer(modifier = Modifier.height(96.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     } else if (uiState.windparkCount == 0) {
                         // Expanded Placeholder when 0 Windparks
@@ -554,4 +581,10 @@ private val MicIcon: ImageVector
         lineTo(17.3f, 11f)
         close()
     }.build()
+
+enum class SheetState {
+    COLLAPSED,
+    HALF_EXPANDED,
+    FULLY_EXPANDED
+}
 
