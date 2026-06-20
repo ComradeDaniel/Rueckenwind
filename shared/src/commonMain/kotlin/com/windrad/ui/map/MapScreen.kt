@@ -40,11 +40,14 @@ import androidx.compose.ui.unit.sp
 import com.windrad.ui.navigation.WindradBottomBar
 import com.windrad.ui.navigation.WindradDestination
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun MapScreen(
     uiState: MapUiState,
     onScanClicked: () -> Unit,
+    onWindmillSelected: (String?) -> Unit,
     currentDestination: WindradDestination,
     onDestinationSelected: (WindradDestination) -> Unit,
     modifier: Modifier = Modifier
@@ -90,6 +93,14 @@ fun MapScreen(
             zoom = uiState.zoom,
             windmillGeoJson = uiState.windmillGeoJson,
             onZoomChanged = { /* Zoom-Änderungen für zukünftige Features nutzbar */ },
+            onWindmillClicked = { id ->
+                onWindmillSelected(id)
+                // Automatically expand the sheet
+                coroutineScope.launch {
+                    isExpanded = true
+                    sheetOffsetY.animateTo(expandedOffsetPx, animationSpec = tween(300))
+                }
+            },
             modifier = Modifier.fillMaxSize()
         )
 
@@ -202,8 +213,30 @@ fun MapScreen(
                     
                     Spacer(modifier = Modifier.height(14.dp))
                     
-                    // Header state: scanning or displaying count
-                    if (uiState.isScanning) {
+                    // Header state: selected windmill details or scanning or displaying count
+                    if (uiState.selectedWindmill != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Anlagendetails",
+                                color = Color(0xFF1A1C1E),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Schließen",
+                                color = Color(0xFF1D7AED),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.clickable {
+                                    onWindmillSelected(null)
+                                }
+                            )
+                        }
+                    } else if (uiState.isScanning) {
                         // Progress bar during scan
                         Box(
                             modifier = Modifier
@@ -246,13 +279,25 @@ fun MapScreen(
                         .fillMaxWidth()
                         .weight(1f)
                         .alpha(progress)
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
-                    if (uiState.windparkCount == 0) {
+                    if (uiState.selectedWindmill != null) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            WindmillDetailsCard(
+                                details = uiState.selectedWindmill,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(96.dp))
+                        }
+                    } else if (uiState.windparkCount == 0) {
                         // Expanded Placeholder when 0 Windparks
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 16.dp)
                                 .padding(top = 32.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
@@ -274,7 +319,11 @@ fun MapScreen(
                         }
                     } else {
                         // List of Found Windparks
-                        Column(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                        ) {
                             Text(
                                 text = "In deiner Nähe",
                                 fontSize = 18.sp,

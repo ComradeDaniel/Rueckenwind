@@ -28,6 +28,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     MapScreen(
                         uiState = mapUiState,
                         onScanClicked = { mapViewModel.onScanClicked() },
+                        onWindmillSelected = { mapViewModel.selectWindmill(it) },
                         currentDestination = currentDestination,
                         onDestinationSelected = { currentDestination = it },
                         modifier = Modifier.fillMaxSize()

@@ -17,4 +17,7 @@ data class MapUiState(
 
     /** Wird true, sobald der GeoJSON-String vollständig aufgebaut ist. */
     val isGeoJsonReady: Boolean = false,
+
+    /** Das aktuell auf der Karte ausgewählte Windrad für die Detailkarte. */
+    val selectedWindmill: WindmillDetails? = null,
 )

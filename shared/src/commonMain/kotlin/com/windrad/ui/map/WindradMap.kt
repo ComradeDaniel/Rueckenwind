@@ -57,6 +57,7 @@ fun WindradMap(
     zoom: Double,
     windmillGeoJson: String?,
     onZoomChanged: (Double) -> Unit,
+    onWindmillClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val cameraState = rememberCameraState(
@@ -230,6 +231,16 @@ fun WindradMap(
                             size = DpSize(38.dp, 41.dp),
                         ),
                         iconAllowOverlap = const(true),
+                        onClick = { features ->
+                            val clickedFeature = features.firstOrNull()
+                            if (clickedFeature != null) {
+                                val id = clickedFeature.properties?.get("id")?.toString()?.removeSurrounding("\"")
+                                if (id != null) {
+                                    onWindmillClicked(id)
+                                }
+                            }
+                            ClickResult.Consume
+                        }
                     )
                 }
                 }
@@ -292,55 +303,21 @@ class WindradPinPainter(val isCollected: Boolean) : Painter() {
 
         // ── Windrad-Icon (Rotor-Symbol in Weiß) ──────────────────────────────
         val rotorCy = centerY - 2.dp.toPx()
-        val rotorCenter = Offset(centerX, rotorCy)
-        val stroke = 1.8.dp.toPx()
-        val gap = 1.0.dp.toPx()
-        val dotRadius = 1.0.dp.toPx()
-        val bladeLen = 3.5.dp.toPx()
-        val poleLen = 6.5.dp.toPx()
-        val bladeStart = dotRadius + gap
+        val dotRadius = 0.9.dp.toPx()
+        val stroke = dotRadius * 2f
+        val gap = dotRadius
+        val bladeLen = dotRadius * 4f
+        val poleLen = dotRadius * 8f
 
-        // Mittelpunkt-Kreis (Nabe)
-        drawCircle(color = Color.White, radius = dotRadius, center = rotorCenter)
-
-        // Oberes Rotorblatt (0°)
-        drawLine(
-            color = Color.White,
-            start = Offset(centerX, rotorCy - bladeStart),
-            end = Offset(centerX, rotorCy - bladeStart - bladeLen),
+        drawWindmill(
+            centerX = centerX,
+            centerY = rotorCy,
+            bladeLength = bladeLen,
+            mastLength = poleLen,
             strokeWidth = stroke,
-            cap = StrokeCap.Round
-        )
-
-        // Rechtes Rotorblatt (120°)
-        rotate(degrees = 120f, pivot = rotorCenter) {
-            drawLine(
-                color = Color.White,
-                start = Offset(centerX, rotorCy - bladeStart),
-                end = Offset(centerX, rotorCy - bladeStart - bladeLen),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-        }
-
-        // Linkes Rotorblatt (-120° = 240°)
-        rotate(degrees = 240f, pivot = rotorCenter) {
-            drawLine(
-                color = Color.White,
-                start = Offset(centerX, rotorCy - bladeStart),
-                end = Offset(centerX, rotorCy - bladeStart - bladeLen),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-        }
-
-        // Mast (nach unten – kein Rotorblatt)
-        drawLine(
             color = Color.White,
-            start = Offset(centerX, rotorCy + bladeStart),
-            end = Offset(centerX, rotorCy + bladeStart + poleLen),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round
+            gap = gap,
+            hubRadius = dotRadius
         )
     }
 }

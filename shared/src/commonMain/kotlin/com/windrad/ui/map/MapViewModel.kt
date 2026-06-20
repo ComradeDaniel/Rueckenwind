@@ -59,4 +59,16 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
             _uiState.update { it.copy(isScanning = false, windparkCount = 3) }
         }
     }
+
+    /**
+     * Wählt ein Windrad aus, um dessen Detailkarte anzuzeigen.
+     * Nutzt vorerst Dummy-Daten gemäß Figma-Spezifikation.
+     */
+    fun selectWindmill(windmillId: String?) {
+        if (windmillId == null) {
+            _uiState.update { it.copy(selectedWindmill = null) }
+        } else {
+            _uiState.update { it.copy(selectedWindmill = WindmillDetails()) }
+        }
+    }
 }
