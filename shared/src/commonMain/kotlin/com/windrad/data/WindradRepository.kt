@@ -4,6 +4,10 @@ import com.windrad.database.WindradDatabase
 import com.windrad.ui.map.WindmillDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Repository für den Zugriff auf Windrad-Daten aus der SQLite-Datenbank.
@@ -66,13 +70,25 @@ class WindradRepository(private val db: WindradDatabase) {
 
     /**
      * Lädt die Details einer einzelnen Windkraftanlage aus der Datenbank.
-     * Nutzt vorerst die Standard-Dummy-Werte für die technischen Details und befüllt
-     * den Anzeigenamen (name) mit dem echten Wert aus der Datenbank.
+     * Berechnet den Betriebsstatus (Aktiv/Inaktiv/Geplant) und das zugehörige
+     * Datum relativ zum aktuellen Systemdatum.
      */
     suspend fun loadWindmillDetails(id: String): WindmillDetails? = withContext(Dispatchers.Default) {
         val row = db.windradDbQueries.selectWindmillById(id).executeAsOneOrNull() ?: return@withContext null
         val displayName = row.unit_display_name ?: row.unit_MaStR_ID
-        WindmillDetails(name = displayName)
+        
+        val (operatingStatus, commissioningDate) = calculatePeriodAndDate(
+            status = row.operating_status,
+            commissioningDateStr = row.unit_commissioning_date,
+            finalDecommissioningDateStr = row.final_decommissioning_date,
+            plannedCommissioningDateStr = row.planned_commissioning_date
+        )
+        
+        WindmillDetails(
+            name = displayName,
+            operatingStatus = operatingStatus,
+            commissioningDate = commissioningDate
+        )
     }
 
     /**
@@ -89,4 +105,87 @@ class WindradRepository(private val db: WindradDatabase) {
             .replace("\t", "\\t")
         return "\"$escaped\""
     }
+}
+
+// ── Hilfsfunktionen für KMP-Datumsberechnung (Format: D.M.YYYY) ──────────────────
+
+internal fun parseLocalDate(dateStr: String?): LocalDate? {
+    if (dateStr.isNullOrBlank()) return null
+    val parts = dateStr.split(".")
+    if (parts.size != 3) return null
+    val day = parts[0].toIntOrNull() ?: return null
+    val month = parts[1].toIntOrNull() ?: return null
+    val year = parts[2].toIntOrNull() ?: return null
+    return try {
+        LocalDate(year, month, day)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+internal fun formatDisplayDate(date: LocalDate): String {
+    val dayStr = date.dayOfMonth.toString().padStart(2, '0')
+    val monthStr = date.monthNumber.toString().padStart(2, '0')
+    return "$dayStr.$monthStr.${date.year}"
+}
+
+internal fun calculatePeriodAndDate(
+    status: String?,
+    commissioningDateStr: String?,
+    finalDecommissioningDateStr: String?,
+    plannedCommissioningDateStr: String?,
+    today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+): Pair<String, String> {
+    val statusClean = status?.trim() ?: ""
+    val isPlanned = statusClean.equals("In Planung", ignoreCase = true)
+    val isActive = statusClean.equals("In Betrieb", ignoreCase = true)
+    val isInactive = statusClean.equals("Endgültig stillgelegt", ignoreCase = true) ||
+                     statusClean.equals("Vorübergehend stillgelegt", ignoreCase = true)
+
+    val sourceDateStr = when {
+        isPlanned -> plannedCommissioningDateStr
+        isInactive -> finalDecommissioningDateStr ?: commissioningDateStr
+        else -> commissioningDateStr
+    }
+
+    val eventDate = parseLocalDate(sourceDateStr)
+    if (eventDate == null) {
+        val fallbackLabel = when {
+            isPlanned -> "Geplant"
+            isInactive -> "Inaktiv"
+            else -> "Aktiv"
+        }
+        return Pair(fallbackLabel, "Datum unbekannt")
+    }
+
+    // Berechnung des Zeitraums in Monaten
+    val yearsDiff = today.year - eventDate.year
+    val monthsDiff = today.monthNumber - eventDate.monthNumber
+    val totalMonths = yearsDiff * 12 + monthsDiff
+
+    val absMonths = kotlin.math.abs(totalMonths)
+
+    val prefix = when {
+        isPlanned -> "Geplant: in "
+        isInactive -> "Inaktiv: seit "
+        else -> "Aktiv: seit "
+    }
+
+    val formattedPeriod = if (absMonths < 12) {
+        val unit = if (absMonths == 1) "Monat" else "Monaten"
+        "$prefix$absMonths $unit"
+    } else {
+        val years = absMonths / 12
+        val unit = if (years == 1) "Jahr" else "Jahren"
+        "$prefix$years $unit"
+    }
+
+    val datePrefix = when {
+        isPlanned -> "Inbetriebnahme am "
+        isInactive && finalDecommissioningDateStr != null -> "Außerbetriebnahme am "
+        else -> "Inbetriebnahme am "
+    }
+    val formattedDateSubtext = "$datePrefix${formatDisplayDate(eventDate)}"
+
+    return Pair(formattedPeriod, formattedDateSubtext)
 }

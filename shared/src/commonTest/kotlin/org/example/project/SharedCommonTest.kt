@@ -1,12 +1,63 @@
 package org.example.project
 
+import com.windrad.data.calculatePeriodAndDate
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SharedCommonTest {
 
+    private val today = LocalDate(2026, 6, 20)
+
     @Test
-    fun example() {
-        assertEquals(3, 1 + 2)
+    fun testPlannedWindmill() {
+        val (status, date) = calculatePeriodAndDate(
+            status = "In Planung",
+            commissioningDateStr = null,
+            finalDecommissioningDateStr = null,
+            plannedCommissioningDateStr = "1.10.2026",
+            today = today
+        )
+        assertEquals("Geplant: in 4 Monaten", status)
+        assertEquals("Inbetriebnahme am 01.10.2026", date)
+    }
+
+    @Test
+    fun testActiveWindmill() {
+        val (status, date) = calculatePeriodAndDate(
+            status = "In Betrieb",
+            commissioningDateStr = "1.9.2017",
+            finalDecommissioningDateStr = null,
+            plannedCommissioningDateStr = null,
+            today = today
+        )
+        assertEquals("Aktiv: seit 8 Jahren", status)
+        assertEquals("Inbetriebnahme am 01.09.2017", date)
+    }
+
+    @Test
+    fun testInactiveWindmillWithDecommissioningDate() {
+        val (status, date) = calculatePeriodAndDate(
+            status = "Endgültig stillgelegt",
+            commissioningDateStr = "3.8.2000",
+            finalDecommissioningDateStr = "1.3.2021",
+            plannedCommissioningDateStr = null,
+            today = today
+        )
+        assertEquals("Inaktiv: seit 5 Jahren", status)
+        assertEquals("Außerbetriebnahme am 01.03.2021", date)
+    }
+
+    @Test
+    fun testInactiveWindmillWithoutDecommissioningDate() {
+        val (status, date) = calculatePeriodAndDate(
+            status = "Vorübergehend stillgelegt",
+            commissioningDateStr = "9.6.1999",
+            finalDecommissioningDateStr = null,
+            plannedCommissioningDateStr = null,
+            today = today
+        )
+        assertEquals("Inaktiv: seit 27 Jahren", status)
+        assertEquals("Inbetriebnahme am 09.06.1999", date)
     }
 }
