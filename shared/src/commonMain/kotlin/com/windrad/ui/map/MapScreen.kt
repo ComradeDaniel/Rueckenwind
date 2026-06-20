@@ -228,7 +228,8 @@ fun MapScreen(
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = (-0.43).sp,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 44.dp)
                             )
                             IconButton(
                                 onClick = { onWindmillSelected(null) },
