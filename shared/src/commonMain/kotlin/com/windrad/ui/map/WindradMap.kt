@@ -1,43 +1,61 @@
 package com.windrad.ui.map
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.expressions.dsl.*
+import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
+import org.maplibre.compose.sources.GeoJsonData
+import org.maplibre.compose.sources.GeoJsonOptions
+import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
+import org.maplibre.compose.util.ClickResult
+import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
 
+/**
+ * Karten-Composable für die Windrad-App.
+ *
+ * Nutzt die native MapLibre C++-Clustering-Engine via GeoJsonSource (cluster = true).
+ * Layer-Struktur:
+ *   1. CircleLayer "windrad-clusters"       – farbige Kreise für Cluster
+ *   2. SymbolLayer "windrad-cluster-count"  – Anzahl-Text über dem Kreis
+ *   3. SymbolLayer "windrad-single"         – WindradPin-Icon für Einzelturbinen
+ *
+ * Cluster-Klick zoomt automatisch zum clusterExpansionZoom hinein.
+ *
+ * Das `collected`-Property in den GeoJSON-Features ist die Grundlage für spätere
+ * farbliche Unterscheidung gesammelter Turbinen (collected == 1 → grün).
+ * TODO: Für gesammelte Turbinen einen zweiten SymbolLayer "windrad-single-collected" mit
+ *       filter = feature["collected"].asNumber() eq const(1f) und
+ *       WindradPinPainter(isCollected = true) hinzufügen.
+ */
 @Composable
 fun WindradMap(
     centerLatitude: Double,
     centerLongitude: Double,
     zoom: Double,
-    windparkCount: Int,
-    modifier: Modifier = Modifier
+    windmillGeoJson: String?,
+    onZoomChanged: (Double) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val cameraState = rememberCameraState(
         CameraPosition(
@@ -46,188 +64,248 @@ fun WindradMap(
         )
     )
 
-    LaunchedEffect(centerLatitude, centerLongitude, zoom) {
-        cameraState.position = CameraPosition(
-            target = Position(longitude = centerLongitude, latitude = centerLatitude),
-            zoom = zoom
-        )
-    }
-
-    var isMapLoaded by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(1500)
-        isMapLoaded = true
-    }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        MaplibreMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraState = cameraState,
-            options = MapOptions(
-                ornamentOptions = OrnamentOptions.AllDisabled
-            ),
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
-            onMapLoadFinished = {
-                println("WindradMap onMapLoadFinished callback fired")
-                isMapLoaded = true
-            }
-        )
-
-        // Read camera position state to react to pans and zooms
-        val cameraPosition = cameraState.position
-        val projection = cameraState.projection
-
-        if (isMapLoaded && windparkCount > 0 && projection != null) {
-            val pins = listOf(
-                PinData(Position(longitude = 11.0328, latitude = 50.9787), 1),
-                PinData(Position(longitude = 12.2000, latitude = 51.6000), 2)
+    // Kamera bei externer Koordinatenänderung nachführen
+    LaunchedEffect(centerLatitude, centerLongitude) {
+        val current = cameraState.position
+        val latDiff = kotlin.math.abs(current.target.latitude - centerLatitude)
+        val lonDiff = kotlin.math.abs(current.target.longitude - centerLongitude)
+        if (latDiff > 0.0001 || lonDiff > 0.0001) {
+            cameraState.position = CameraPosition(
+                target = Position(longitude = centerLongitude, latitude = centerLatitude),
+                zoom = cameraState.position.zoom
             )
+        }
+    }
 
-            pins.forEach { pin ->
-                val screenCoord = projection.screenLocationFromPosition(pin.position)
-                if (screenCoord != null) {
-                    val x = screenCoord.x
-                    val y = screenCoord.y
+    // Zoom-Änderungen nach oben melden
+    LaunchedEffect(cameraState.position.zoom) {
+        onZoomChanged(cameraState.position.zoom)
+    }
 
-                    val left = x - 19.dp
-                    val top = y - 41.dp
+    // WindradPin als Painter-Objekt für MapLibre-Sprite-Registrierung.
+    // Die maplibre-compose image(Painter)-API rendert diesen Painter zu einem Bitmap
+    // und registriert ihn automatisch als Sprite im MapLibre-Style.
+    val windradPinPainter = remember { WindradPinPainter(isCollected = false) }
 
-                    WindradPin(
-                        modifier = Modifier.offset(x = left, y = top)
+    if (windmillGeoJson == null) {
+        androidx.compose.foundation.layout.Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            androidx.compose.material3.CircularProgressIndicator(
+                color = androidx.compose.ui.graphics.Color(0xFF007AFF)
+            )
+        }
+    } else {
+        var isMapLoaded by remember { mutableStateOf(false) }
+        MaplibreMap(
+            modifier = modifier.fillMaxSize(),
+            cameraState = cameraState,
+            options = MapOptions(ornamentOptions = OrnamentOptions.AllDisabled),
+            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/bright"),
+            onMapLoadFinished = {
+                println("WindradMap: onMapLoadFinished fired!")
+                isMapLoaded = true
+            },
+            content = {
+                if (isMapLoaded) {
+                    val source = rememberGeoJsonSource(
+                    data = GeoJsonData.JsonString(windmillGeoJson),
+                    options = GeoJsonOptions(
+                        cluster = true,
+                        clusterRadius = 60,   // Pixel-Radius in 1/512-Tile-Einheiten
+                        clusterMaxZoom = 13,  // Zoom ≥ 14: Einzelturbinen sichtbar
+                        clusterMinPoints = 2,
+                    )
+                )
+
+                // ── Anchoring custom layers at the top ─────────────────────────────
+                org.maplibre.compose.layers.Anchor.Top {
+
+                    // ── Layer 1: Cluster-Kreise ─────────────────────────────────────────────
+                    // Filter: nur Features mit point_count-Property (= vom Engine erzeugte Cluster)
+                    CircleLayer(
+                        id = "windrad-clusters",
+                        source = source,
+                        filter = feature.has("point_count"),
+                        // Radius wächst mit der Cluster-Größe
+                        radius = step(
+                            input = feature["point_count"].asNumber(),
+                            fallback = const(18.dp),
+                            10 to const(24.dp),
+                            100 to const(30.dp),
+                            1000 to const(38.dp),
+                        ),
+                        // Farbe wechselt mit der Cluster-Größe (blauer Farbverlauf)
+                        color = step(
+                            input = feature["point_count"].asNumber(),
+                            fallback = const(Color(0xFF1565C0)),   // Dunkelblau < 10
+                            10 to const(Color(0xFF1976D2)),        // Mittelblau 10–99
+                            100 to const(Color(0xFF0288D1)),       // Hellblau 100–999
+                            1000 to const(Color(0xFF006064)),      // Teal >= 1000
+                        ),
+                        strokeWidth = const(2.dp),
+                        strokeColor = const(Color.White),
+                        opacity = const(0.92f),
+                        onClick = { features ->
+                            // Cluster-Klick: zur nächsten Zoom-Stufe zoomen, bei der der Cluster auflöst
+                            val clickedFeature = features.firstOrNull()
+                            if (clickedFeature != null && source.isCluster(clickedFeature)) {
+                                val expansionZoom = source.getClusterExpansionZoom(clickedFeature)
+                                val point = clickedFeature.geometry
+                                val target = if (point is Point) point.coordinates else cameraState.position.target
+                                cameraState.position = CameraPosition(
+                                    target = target,
+                                    zoom = expansionZoom,
+                                    bearing = cameraState.position.bearing,
+                                    tilt = cameraState.position.tilt
+                                )
+                            }
+                            ClickResult.Consume
+                        }
+                    )
+
+                    // ── Layer 2: Cluster-Zähler-Text ───────────────────────────────────────
+                    // Zeigt die Anzahl geclusterter Punkte über dem Kreis
+                    SymbolLayer(
+                        id = "windrad-cluster-count",
+                        source = source,
+                        filter = feature.has("point_count"),
+                        // point_count_abbreviated: z.B. "1.2k" statt "1200"
+                        textField = format(
+                            span(feature["point_count_abbreviated"].asString())
+                        ),
+                        textFont = const(listOf("Noto Sans Bold")),
+                        textColor = const(Color.White),
+                        textSize = const(13.sp),
+                        textHaloColor = const(Color.Transparent),
+                        textAllowOverlap = const(true),
+                        iconAllowOverlap = const(true),
+                    )
+
+                    // ── Layer 3: Einzelne Windräder (WindradPin-Icon) ──────────────────────
+                    // Filter: Features OHNE point_count (= nicht vom Engine geclustert)
+                    // Zeigt den WindradPin-Painter als Symbol-Icon
+                    SymbolLayer(
+                        id = "windrad-single",
+                        source = source,
+                        filter = !feature.has("point_count"),
+                        iconImage = image(
+                            value = windradPinPainter,
+                            size = DpSize(38.dp, 41.dp),
+                        ),
+                        iconAllowOverlap = const(true),
                     )
                 }
+                }
             }
-        }
+        )
     }
 }
 
-private data class PinData(
-    val position: Position,
-    val count: Int
-)
+/**
+ * Painter-Implementierung des WindradPin für die Verwendung als MapLibre Sprite-Icon.
+ *
+ * Die maplibre-compose `image(Painter)`-API rendert diesen Painter zu einem Bitmap und
+ * registriert ihn automatisch als Sprite im MapLibre-Style — keine plattformspezifische
+ * Konvertierung nötig.
+ *
+ * @param isCollected true = grüner Pin (gesammelt), false = blauer Pin (noch nicht gesammelt)
+ */
+class WindradPinPainter(val isCollected: Boolean) : Painter() {
 
-@Composable
-private fun WindradPin(
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .width(38.dp)
-            .height(41.dp),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val circleRadius = 16.dp.toPx()
-            val centerX = size.width / 2f
-            val centerY = circleRadius + 1.dp.toPx() // Slight offset from top
-            val tipY = size.height - 2.dp.toPx() // Bottom tip
-            
-            val path = Path().apply {
-                addArc(
-                    oval = Rect(
-                        centerX - circleRadius,
-                        centerY - circleRadius,
-                        centerX + circleRadius,
-                        centerY + circleRadius
-                    ),
-                    startAngleDegrees = 40f,
-                    sweepAngleDegrees = -260f
-                )
-                // Curve down to the tip
-                lineTo(centerX, tipY)
-                close()
-            }
+    // Intrinsische Größe des Pins in Pixeln (wird durch die DpSize in image() überschrieben)
+    override val intrinsicSize = Size(38f, 41f)
 
-            // Draw soft shadow under the droplet tip
-            drawCircle(
-                color = Color.Black.copy(alpha = 0.15f),
-                radius = 3.dp.toPx(),
-                center = androidx.compose.ui.geometry.Offset(centerX, tipY + 1.dp.toPx())
+    override fun DrawScope.onDraw() {
+        val circleRadius = 16.dp.toPx()
+        val centerX = size.width / 2f
+        val centerY = circleRadius + 1.dp.toPx()
+        val tipY = size.height - 2.dp.toPx()
+
+        // ── Schatten-Punkt unter dem Pin-Tip ──────────────────────────────────
+        drawCircle(
+            color = Color.Black.copy(alpha = 0.15f),
+            radius = 3.dp.toPx(),
+            center = Offset(centerX, tipY + 1.dp.toPx())
+        )
+
+        // ── Pin-Form (Tear-Drop: Kreis + Spitze nach unten) ────────────────────
+        val path = Path().apply {
+            addArc(
+                oval = Rect(
+                    centerX - circleRadius,
+                    centerY - circleRadius,
+                    centerX + circleRadius,
+                    centerY + circleRadius
+                ),
+                startAngleDegrees = 40f,
+                sweepAngleDegrees = -260f
             )
-
-            // Draw white fill (the outer droplet)
-            drawPath(
-                path = path,
-                color = Color.White
-            )
-
-            // Draw inner primary blue circle
-            drawCircle(
-                color = Color(0xFF007AFF), // Bright iOS-like blue
-                radius = 12.dp.toPx(),
-                center = androidx.compose.ui.geometry.Offset(centerX, centerY)
-            )
-
-            // Draw Wind Turbine Icon (White)
-            // The icon in Figma is exactly 10x15 dp.
-            // We draw it centered within the blue circle.
-            val iconWidth = 10.dp.toPx()
-            val iconHeight = 15.dp.toPx()
-            
-            // The center of the wind turbine's rotor is about 37.5% down from its top
-            val rotorCx = centerX
-            val rotorCy = centerY - (iconHeight / 2f) + (iconHeight * 0.375f)
-            val rotorCenter = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy)
-
-            val stroke = 1.8.dp.toPx()
-            val gap = 1.0.dp.toPx()
-            val dotRadius = 0.9.dp.toPx()
-            val bladeLen = 3.5.dp.toPx()
-            val poleLen = 7.0.dp.toPx()
-
-            // Center dot
-            drawCircle(
-                color = Color.White,
-                radius = dotRadius,
-                center = rotorCenter
-            )
-
-            val bladeStartOffset = dotRadius + gap
-
-            // Top blade
-            drawLine(
-                color = Color.White,
-                start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset),
-                end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset - bladeLen),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-
-            // Pole (pointing down)
-            drawLine(
-                color = Color.White,
-                start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy + bladeStartOffset),
-                end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy + bladeStartOffset + poleLen),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
-
-            // Right blade (120 degrees)
-            withTransform({
-                rotate(120f, rotorCenter)
-            }) {
-                drawLine(
-                    color = Color.White,
-                    start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset),
-                    end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset - bladeLen),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round
-                )
-            }
-
-            // Left blade (-120 degrees)
-            withTransform({
-                rotate(-120f, rotorCenter)
-            }) {
-                drawLine(
-                    color = Color.White,
-                    start = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset),
-                    end = androidx.compose.ui.geometry.Offset(rotorCx, rotorCy - bladeStartOffset - bladeLen),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round
-                )
-            }
+            lineTo(centerX, tipY)
+            close()
         }
+        drawPath(path = path, color = Color.White)
+
+        // ── Pin-Farbkreis (Blau = ungesammelt, Grün = gesammelt) ─────────────
+        val pinColor = if (isCollected) Color(0xFF34C759) else Color(0xFF007AFF)
+        drawCircle(
+            color = pinColor,
+            radius = 12.dp.toPx(),
+            center = Offset(centerX, centerY)
+        )
+
+        // ── Windrad-Icon (Rotor-Symbol in Weiß) ──────────────────────────────
+        val rotorCy = centerY - 2.dp.toPx()
+        val rotorCenter = Offset(centerX, rotorCy)
+        val stroke = 1.8.dp.toPx()
+        val gap = 1.0.dp.toPx()
+        val dotRadius = 1.0.dp.toPx()
+        val bladeLen = 3.5.dp.toPx()
+        val poleLen = 6.5.dp.toPx()
+        val bladeStart = dotRadius + gap
+
+        // Mittelpunkt-Kreis (Nabe)
+        drawCircle(color = Color.White, radius = dotRadius, center = rotorCenter)
+
+        // Oberes Rotorblatt (0°)
+        drawLine(
+            color = Color.White,
+            start = Offset(centerX, rotorCy - bladeStart),
+            end = Offset(centerX, rotorCy - bladeStart - bladeLen),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round
+        )
+
+        // Rechtes Rotorblatt (120°)
+        rotate(degrees = 120f, pivot = rotorCenter) {
+            drawLine(
+                color = Color.White,
+                start = Offset(centerX, rotorCy - bladeStart),
+                end = Offset(centerX, rotorCy - bladeStart - bladeLen),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+        }
+
+        // Linkes Rotorblatt (-120° = 240°)
+        rotate(degrees = 240f, pivot = rotorCenter) {
+            drawLine(
+                color = Color.White,
+                start = Offset(centerX, rotorCy - bladeStart),
+                end = Offset(centerX, rotorCy - bladeStart - bladeLen),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+        }
+
+        // Mast (nach unten – kein Rotorblatt)
+        drawLine(
+            color = Color.White,
+            start = Offset(centerX, rotorCy + bladeStart),
+            end = Offset(centerX, rotorCy + bladeStart + poleLen),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round
+        )
     }
 }

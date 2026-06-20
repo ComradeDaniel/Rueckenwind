@@ -88,7 +88,8 @@ fun MapScreen(
             centerLatitude = uiState.centerLatitude,
             centerLongitude = uiState.centerLongitude,
             zoom = uiState.zoom,
-            windparkCount = uiState.windparkCount,
+            windmillGeoJson = uiState.windmillGeoJson,
+            onZoomChanged = { /* Zoom-Änderungen für zukünftige Features nutzbar */ },
             modifier = Modifier.fillMaxSize()
         )
 

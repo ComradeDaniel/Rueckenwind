@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.windrad.database.DatabaseDriverFactory
 import com.windrad.ui.collection.CollectionScreen
 import com.windrad.ui.faq.FaqScreen
 import com.windrad.ui.map.MapScreen
@@ -15,11 +15,10 @@ import com.windrad.ui.navigation.WindradDestination
 import com.windrad.ui.theme.WindradTheme
 
 @Composable
-@Preview
-fun App() {
+fun App(driverFactory: DatabaseDriverFactory) {
     WindradTheme {
         var currentDestination by remember { mutableStateOf(WindradDestination.MAP) }
-        val mapViewModel = remember { MapViewModel() }
+        val mapViewModel = remember { MapViewModel(driverFactory) }
         val mapUiState by mapViewModel.uiState.collectAsState()
 
         Box(modifier = Modifier.fillMaxSize()) {
