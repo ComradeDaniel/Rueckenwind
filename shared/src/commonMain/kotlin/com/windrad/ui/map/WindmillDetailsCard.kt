@@ -33,7 +33,8 @@ data class WindmillDetails(
     val heightComparisonText: String = "166m ~ Kölner Dom",
     val rotorComparisonText: String = "126m ~ 1,7 Fußballfelder",
     val technologyText: String = "Horizontalläufer",
-    val locationText: String = "An Land"
+    val locationText: String = "An Land",
+    val isOnshore: Boolean = true
 )
 
 /**
@@ -213,7 +214,7 @@ fun WindmillDetailsCard(
                         modifier = Modifier.size(48.dp, 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        WindTurbineOnshoreIcon(modifier = Modifier.size(24.dp, 36.dp))
+                        WindTurbineLocationIcon(isOnshore = details.isOnshore, modifier = Modifier.size(24.dp, 36.dp))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -421,7 +422,7 @@ fun WindTurbineHorizontalIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun WindTurbineOnshoreIcon(modifier: Modifier = Modifier) {
+fun WindTurbineLocationIcon(isOnshore: Boolean, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val color = Color(0xFF565E71)
         val strokeWidth = 2.2.dp.toPx()
@@ -430,11 +431,19 @@ fun WindTurbineOnshoreIcon(modifier: Modifier = Modifier) {
         val hubRadius = strokeWidth / 2f
         val gap = hubRadius
         
-        // Ground mound curve at the bottom
+        // Ground mound curve or water waves at the bottom
         val groundY = size.height - 4.dp.toPx()
         val path = Path().apply {
-            moveTo(0f, size.height)
-            quadraticTo(centerX, groundY, size.width, size.height)
+            if (isOnshore) {
+                moveTo(0f, size.height)
+                quadraticTo(centerX, groundY, size.width, size.height)
+            } else {
+                moveTo(0f, groundY)
+                quadraticTo(size.width * 0.125f, groundY - 3.dp.toPx(), size.width * 0.25f, groundY)
+                quadraticTo(size.width * 0.375f, groundY + 3.dp.toPx(), size.width * 0.5f, groundY)
+                quadraticTo(size.width * 0.625f, groundY - 3.dp.toPx(), size.width * 0.75f, groundY)
+                quadraticTo(size.width * 0.875f, groundY + 3.dp.toPx(), size.width, groundY)
+            }
         }
         drawPath(path = path, color = color, style = Stroke(width = strokeWidth * 1.5f))
         

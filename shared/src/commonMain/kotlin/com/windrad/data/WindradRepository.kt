@@ -94,12 +94,17 @@ class WindradRepository(private val db: WindradDatabase) {
             diameter = row.turbine_rotor_diameter
         )
         
+        val isOnshore = row.onshore_offshore_type != "Windkraft auf See"
+        val locationText = calculateLocationText(row.onshore_offshore_type)
+        
         WindmillDetails(
             name = displayName,
             operatingStatus = operatingStatus,
             commissioningDate = commissioningDate,
             householdsFedText = householdsText,
-            rotorComparisonText = rotorText
+            rotorComparisonText = rotorText,
+            locationText = locationText,
+            isOnshore = isOnshore
         )
     }
 
@@ -225,4 +230,12 @@ internal fun calculateRotorComparisonText(
     val fractionalPart = kotlin.math.abs(rounded % 10)
     val formattedFields = "$integerPart,$fractionalPart"
     return "${diameter.toInt()}m ~ $formattedFields Fußballfelder"
+}
+
+internal fun calculateLocationText(onshoreOffshoreType: String?): String {
+    return when (onshoreOffshoreType) {
+        "Windkraft an Land" -> "An Land"
+        "Windkraft auf See" -> "Auf See"
+        else -> "Wert leider nicht bekannt"
+    }
 }
