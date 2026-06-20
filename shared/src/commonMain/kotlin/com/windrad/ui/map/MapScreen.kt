@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -215,26 +216,34 @@ fun MapScreen(
                     
                     // Header state: selected windmill details or scanning or displaying count
                     if (uiState.selectedWindmill != null) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Anlagendetails",
-                                color = Color(0xFF1A1C1E),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Schließen",
-                                color = Color(0xFF1D7AED),
-                                fontSize = 14.sp,
+                                text = uiState.selectedWindmill.name,
+                                color = Color(0xFF1A1A1A),
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.clickable {
-                                    onWindmillSelected(null)
-                                }
+                                letterSpacing = (-0.43).sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
+                            IconButton(
+                                onClick = { onWindmillSelected(null) },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Color(0xFFE5E5EA), CircleShape)
+                                    .align(Alignment.CenterEnd)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Schließen",
+                                    tint = Color(0xFF3C3C43).copy(alpha = 0.6f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     } else if (uiState.isScanning) {
                         // Progress bar during scan

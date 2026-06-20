@@ -1,6 +1,7 @@
 package com.windrad.data
 
 import com.windrad.database.WindradDatabase
+import com.windrad.ui.map.WindmillDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -61,6 +62,17 @@ class WindradRepository(private val db: WindradDatabase) {
             }
             append("]}")
         }
+    }
+
+    /**
+     * Lädt die Details einer einzelnen Windkraftanlage aus der Datenbank.
+     * Nutzt vorerst die Standard-Dummy-Werte für die technischen Details und befüllt
+     * den Anzeigenamen (name) mit dem echten Wert aus der Datenbank.
+     */
+    suspend fun loadWindmillDetails(id: String): WindmillDetails? = withContext(Dispatchers.Default) {
+        val row = db.windradDbQueries.selectWindmillById(id).executeAsOneOrNull() ?: return@withContext null
+        val displayName = row.unit_display_name ?: row.unit_MaStR_ID
+        WindmillDetails(name = displayName)
     }
 
     /**

@@ -68,7 +68,10 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
         if (windmillId == null) {
             _uiState.update { it.copy(selectedWindmill = null) }
         } else {
-            _uiState.update { it.copy(selectedWindmill = WindmillDetails()) }
+            viewModelScope.launch {
+                val details = repository.loadWindmillDetails(windmillId)
+                _uiState.update { it.copy(selectedWindmill = details) }
+            }
         }
     }
 }

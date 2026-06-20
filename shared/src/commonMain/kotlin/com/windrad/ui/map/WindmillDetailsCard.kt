@@ -26,6 +26,7 @@ import kotlin.math.PI
  * Filled with Figma-specified default dummy values.
  */
 data class WindmillDetails(
+    val name: String = "44025",
     val operatingStatus: String = "Aktiv: seit 6 Jahren",
     val commissioningDate: String = "Inbetriebnahme am 04.02.2020",
     val householdsFedText: String = "Versorgt ca. 2300 Haushalte (3450kW)",
