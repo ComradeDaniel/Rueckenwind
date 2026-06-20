@@ -1,6 +1,7 @@
 package org.example.project
 
 import com.windrad.data.calculatePeriodAndDate
+import com.windrad.data.calculateHouseholdsFedText
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,5 +60,32 @@ class SharedCommonTest {
         )
         assertEquals("Inaktiv: seit 27 Jahren", status)
         assertEquals("Inbetriebnahme am 09.06.1999", date)
+    }
+
+    @Test
+    fun testOnshoreHouseholds() {
+        val text = calculateHouseholdsFedText(
+            netCapacity = 3450.0,
+            onshoreOffshoreType = "Windkraft an Land"
+        )
+        assertEquals("Versorgt ca. 2682 Haushalte (3450kW)", text)
+    }
+
+    @Test
+    fun testOffshoreHouseholds() {
+        val text = calculateHouseholdsFedText(
+            netCapacity = 5000.0,
+            onshoreOffshoreType = "Windkraft auf See"
+        )
+        assertEquals("Versorgt ca. 7201 Haushalte (5000kW)", text)
+    }
+
+    @Test
+    fun testUnknownCapacityHouseholds() {
+        val text = calculateHouseholdsFedText(
+            netCapacity = null,
+            onshoreOffshoreType = "Windkraft an Land"
+        )
+        assertEquals("Versorgt: Wert leider nicht bekannt", text)
     }
 }

@@ -8,6 +8,7 @@ import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
+import kotlin.math.roundToInt
 
 /**
  * Repository für den Zugriff auf Windrad-Daten aus der SQLite-Datenbank.
@@ -84,10 +85,16 @@ class WindradRepository(private val db: WindradDatabase) {
             plannedCommissioningDateStr = row.planned_commissioning_date
         )
         
+        val householdsText = calculateHouseholdsFedText(
+            netCapacity = row.unit_net_nominal_capacity,
+            onshoreOffshoreType = row.onshore_offshore_type
+        )
+        
         WindmillDetails(
             name = displayName,
             operatingStatus = operatingStatus,
-            commissioningDate = commissioningDate
+            commissioningDate = commissioningDate,
+            householdsFedText = householdsText
         )
     }
 
@@ -124,8 +131,8 @@ internal fun parseLocalDate(dateStr: String?): LocalDate? {
 }
 
 internal fun formatDisplayDate(date: LocalDate): String {
-    val dayStr = date.dayOfMonth.toString().padStart(2, '0')
-    val monthStr = date.monthNumber.toString().padStart(2, '0')
+    val dayStr = date.day.toString().padStart(2, '0')
+    val monthStr = (date.month.ordinal + 1).toString().padStart(2, '0')
     return "$dayStr.$monthStr.${date.year}"
 }
 
@@ -160,7 +167,7 @@ internal fun calculatePeriodAndDate(
 
     // Berechnung des Zeitraums in Monaten
     val yearsDiff = today.year - eventDate.year
-    val monthsDiff = today.monthNumber - eventDate.monthNumber
+    val monthsDiff = today.month.ordinal - eventDate.month.ordinal
     val totalMonths = yearsDiff * 12 + monthsDiff
 
     val absMonths = kotlin.math.abs(totalMonths)
@@ -188,4 +195,15 @@ internal fun calculatePeriodAndDate(
     val formattedDateSubtext = "$datePrefix${formatDisplayDate(eventDate)}"
 
     return Pair(formattedPeriod, formattedDateSubtext)
+}
+
+internal fun calculateHouseholdsFedText(
+    netCapacity: Double?,
+    onshoreOffshoreType: String?
+): String {
+    if (netCapacity == null) return "Versorgt: Wert leider nicht bekannt"
+    val isOnshore = onshoreOffshoreType != "Windkraft auf See"
+    val fullLoadHours = if (isOnshore) 1770 else 3278
+    val households = ((netCapacity * fullLoadHours) / 2277.0).roundToInt()
+    return "Versorgt ca. $households Haushalte (${netCapacity.toInt()}kW)"
 }
