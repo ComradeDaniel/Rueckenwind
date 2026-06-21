@@ -6,31 +6,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF1D7AED), // Design Primary Blue
+    primary = AppColors.Blue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD6E4FF),
-    onPrimaryContainer = Color(0xFF001945),
-    secondary = Color(0xFF565E71),
+    primaryContainer = AppColors.PrimaryContainer,
+    onPrimaryContainer = AppColors.OnPrimaryContainer,
+    secondary = AppColors.SubtitleText,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFDAE2F9),
-    onSecondaryContainer = Color(0xFF131C2C),
-    tertiary = Color(0xFF705574),
+    secondaryContainer = AppColors.SecondaryContainer,
+    onSecondaryContainer = AppColors.OnSecondaryContainer,
+    tertiary = AppColors.Tertiary,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFFAD8FC),
-    onTertiaryContainer = Color(0xFF29132D),
-    background = Color(0xFFFCFCFF),
-    onBackground = Color(0xFF1A1C1E),
-    surface = Color(0xFFFCFCFF),
-    onSurface = Color(0xFF1A1C1E),
-    surfaceVariant = Color(0xFFE1E2EC),
-    onSurfaceVariant = Color(0xFF44474F),
-    outline = Color(0xFF74777F),
-    inverseOnSurface = Color(0xFFF1F0F4),
-    inverseSurface = Color(0xFF2F3033),
-    inversePrimary = Color(0xFFA9C7FF),
-    surfaceTint = Color(0xFF1D7AED),
-    outlineVariant = Color(0xFFC4C6D0),
-    scrim = Color(0xFF000000)
+    tertiaryContainer = AppColors.TertiaryContainer,
+    onTertiaryContainer = AppColors.OnTertiaryContainer,
+    background = AppColors.Background,
+    onBackground = AppColors.DarkText,
+    surface = AppColors.Background,
+    onSurface = AppColors.DarkText,
+    surfaceVariant = AppColors.SurfaceVariant,
+    onSurfaceVariant = AppColors.OnSurfaceVariant,
+    outline = AppColors.Outline,
+    inverseOnSurface = AppColors.InverseOnSurface,
+    inverseSurface = AppColors.InverseSurface,
+    inversePrimary = AppColors.InversePrimary,
+    surfaceTint = AppColors.Blue,
+    outlineVariant = AppColors.OutlineVariant,
+    scrim = AppColors.Scrim
 )
 
 @Composable

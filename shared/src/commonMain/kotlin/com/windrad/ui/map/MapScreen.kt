@@ -46,12 +46,19 @@ import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.windrad.ui.theme.AppColors
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 
 @Composable
 fun MapScreen(
     uiState: MapUiState,
     onScanClicked: () -> Unit,
     onWindmillSelected: (String?) -> Unit,
+    onSearchQueryChanged: (String) -> Unit,
+    onSearchResultSelected: (SearchSuggestion) -> Unit,
+    onClearSearch: () -> Unit,
     currentDestination: WindradDestination,
     onDestinationSelected: (WindradDestination) -> Unit,
     modifier: Modifier = Modifier
@@ -113,44 +120,155 @@ fun MapScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // 2. Floating Search Bar
-        Surface(
+        // 2. Floating Search Bar & Suggestion List
+        Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()
                 .padding(top = 16.dp, start = 12.dp, end = 12.dp)
-                .fillMaxWidth()
-                .height(44.dp),
-            shape = RoundedCornerShape(22.dp),
-            color = Color.White.copy(alpha = 0.9f),
-            shadowElevation = 6.dp,
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
+            Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(22.dp),
+                color = Color.White.copy(alpha = 0.9f),
+                shadowElevation = 6.dp,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
             ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Suchen",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Suchen",
-                    color = Color.Gray,
-                    fontSize = 15.sp,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = MicIcon,
-                    contentDescription = "Sprachsuche",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Suchen",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    
+                    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+                    
+                    BasicTextField(
+                        value = uiState.searchQuery,
+                        onValueChange = onSearchQueryChanged,
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = AppColors.DarkText,
+                            fontSize = 15.sp
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Search
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                if (uiState.searchSuggestions.isNotEmpty()) {
+                                    onSearchResultSelected(uiState.searchSuggestions.first())
+                                }
+                                focusManager.clearFocus()
+                            }
+                        ),
+                        decorationBox = { innerTextField ->
+                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                                if (uiState.searchQuery.isEmpty()) {
+                                    Text(
+                                        text = "Suchen",
+                                        color = Color.Gray,
+                                        fontSize = 15.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        }
+                    )
+                    
+                    if (uiState.searchQuery.isNotEmpty()) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Löschen",
+                            tint = Color.Gray,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable {
+                                    onClearSearch()
+                                }
+                        )
+                    } else {
+                        Icon(
+                            imageVector = MicIcon,
+                            contentDescription = "Sprachsuche",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            if (uiState.searchSuggestions.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .heightIn(max = 250.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White.copy(alpha = 0.95f),
+                    shadowElevation = 8.dp,
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
+                ) {
+                    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        items(uiState.searchSuggestions) { suggestion ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onSearchResultSelected(suggestion)
+                                        focusManager.clearFocus()
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val (icon, label) = when (suggestion.type) {
+                                    "city" -> "📍" to "Ort"
+                                    "wind_plant_name" -> "💨" to "Windpark"
+                                    "postal_code" -> "✉️" to "PLZ"
+                                    else -> "📍" to "Ort"
+                                }
+                                Text(
+                                    text = icon,
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = suggestion.name,
+                                        color = AppColors.DarkText,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = suggestion.subtitle.ifEmpty { label },
+                                        color = Color.Gray,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

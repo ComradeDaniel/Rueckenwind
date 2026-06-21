@@ -29,6 +29,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         uiState = mapUiState,
                         onScanClicked = { mapViewModel.onScanClicked() },
                         onWindmillSelected = { mapViewModel.selectWindmill(it) },
+                        onSearchQueryChanged = { mapViewModel.onSearchQueryChanged(it) },
+                        onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
+                        onClearSearch = { mapViewModel.clearSearch() },
                         currentDestination = currentDestination,
                         onDestinationSelected = { currentDestination = it },
                         modifier = Modifier.fillMaxSize()

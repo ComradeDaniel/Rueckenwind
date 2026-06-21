@@ -20,4 +20,16 @@ data class MapUiState(
 
     /** Das aktuell auf der Karte ausgewählte Windrad für die Detailkarte. */
     val selectedWindmill: WindmillDetails? = null,
+    
+    val searchQuery: String = "",
+    val searchSuggestions: List<SearchSuggestion> = emptyList(),
 )
+
+data class SearchSuggestion(
+    val type: String, // "city", "wind_plant_name", "postal_code"
+    val name: String,
+    val latitude: Double,
+    val longitude: Double,
+    val subtitle: String = ""
+)
+

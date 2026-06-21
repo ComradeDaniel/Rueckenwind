@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 /**
  * ViewModel für den Karten-Screen.
@@ -26,6 +27,7 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
 
     private val db = createDatabase(driverFactory)
     private val repository = WindradRepository(db)
+    private var searchJob: Job? = null
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -74,4 +76,55 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
             }
         }
     }
+
+    fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _uiState.update { it.copy(searchSuggestions = emptyList()) }
+        } else {
+            searchJob = viewModelScope.launch {
+                // 1. Lokale DB-Suche sofort ausführen & anzeigen
+                val localSuggestions = repository.searchLocations(query)
+                _uiState.update { it.copy(searchSuggestions = localSuggestions) }
+                
+                // 2. Debounce für Online-Suche (500ms warten)
+                delay(500)
+                
+                // 3. Online-Ortssuche via Nominatim ausführen
+                try {
+                    val onlineSuggestions = repository.searchOnlinePlaces(query)
+                    val combined = (localSuggestions + onlineSuggestions)
+                        .associateBy { it.name.lowercase() + "|" + it.type }
+                        .values
+                        .toList()
+                    _uiState.update { it.copy(searchSuggestions = combined) }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    fun onSearchResultSelected(suggestion: SearchSuggestion) {
+        _uiState.update {
+            it.copy(
+                centerLatitude = suggestion.latitude,
+                centerLongitude = suggestion.longitude,
+                zoom = 12.5,
+                searchQuery = suggestion.name,
+                searchSuggestions = emptyList()
+            )
+        }
+    }
+
+    fun clearSearch() {
+        _uiState.update {
+            it.copy(
+                searchQuery = "",
+                searchSuggestions = emptyList()
+            )
+        }
+    }
 }
+

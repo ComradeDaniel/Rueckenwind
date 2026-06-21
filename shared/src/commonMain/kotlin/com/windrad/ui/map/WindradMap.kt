@@ -68,15 +68,16 @@ fun WindradMap(
         )
     )
 
-    // Kamera bei externer Koordinatenänderung nachführen
-    LaunchedEffect(centerLatitude, centerLongitude) {
+    // Kamera bei externer Koordinaten- oder Zoomänderung nachführen
+    LaunchedEffect(centerLatitude, centerLongitude, zoom) {
         val current = cameraState.position
         val latDiff = kotlin.math.abs(current.target.latitude - centerLatitude)
         val lonDiff = kotlin.math.abs(current.target.longitude - centerLongitude)
-        if (latDiff > 0.0001 || lonDiff > 0.0001) {
+        val zoomDiff = kotlin.math.abs(current.zoom - zoom)
+        if (latDiff > 0.0001 || lonDiff > 0.0001 || zoomDiff > 0.1) {
             cameraState.position = CameraPosition(
                 target = Position(longitude = centerLongitude, latitude = centerLatitude),
-                zoom = cameraState.position.zoom
+                zoom = zoom
             )
         }
     }

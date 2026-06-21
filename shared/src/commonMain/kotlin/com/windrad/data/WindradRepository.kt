@@ -2,6 +2,7 @@ package com.windrad.data
 
 import com.windrad.database.WindradDatabase
 import com.windrad.ui.map.WindmillDetails
+import com.windrad.ui.map.SearchSuggestion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
@@ -9,6 +10,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 /**
  * Repository für den Zugriff auf Windrad-Daten aus der SQLite-Datenbank.
@@ -111,6 +114,58 @@ class WindradRepository(private val db: WindradDatabase) {
             isOnshore = isOnshore
         )
     }
+
+    /**
+     * Sucht nach Orten, Windparks und Postleitzahlen in der Datenbank.
+     */
+    suspend fun searchLocations(query: String): List<SearchSuggestion> = withContext(Dispatchers.Default) {
+        if (query.isBlank()) return@withContext emptyList()
+        val matchQuery = "%$query%"
+        db.windradDbQueries.searchLocations(matchQuery).executeAsList().map { row ->
+            SearchSuggestion(
+                type = row.type,
+                name = row.name ?: "",
+                latitude = row.latitude ?: 0.0,
+                longitude = row.longitude ?: 0.0
+            )
+        }
+    }
+
+    private val jsonParser = Json { ignoreUnknownKeys = true }
+
+    /**
+     * Sucht online nach Orten über die Nominatim API (OpenStreetMap).
+     */
+    suspend fun searchOnlinePlaces(query: String): List<SearchSuggestion> = withContext(Dispatchers.Default) {
+        if (query.isBlank()) return@withContext emptyList()
+        val encodedQuery = urlEncode(query)
+        val url = "https://nominatim.openstreetmap.org/search?q=$encodedQuery&format=json&limit=5&addressdetails=1"
+        val response = HttpUtil.get(url) ?: return@withContext emptyList()
+        try {
+            val results = jsonParser.decodeFromString<List<NominatimResult>>(response)
+            results.mapNotNull { res ->
+                val lat = res.lat.toDoubleOrNull() ?: return@mapNotNull null
+                val lon = res.lon.toDoubleOrNull() ?: return@mapNotNull null
+                
+                val parts = res.display_name.split(",")
+                val name = parts.firstOrNull()?.trim() ?: res.display_name
+                val subtitle = parts.drop(1).joinToString(",").trim()
+                
+                SearchSuggestion(
+                    type = "city",
+                    name = name,
+                    latitude = lat,
+                    longitude = lon,
+                    subtitle = subtitle.ifEmpty { "Ort" }
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+
 
     /**
      * Hilfsfunktion: Konvertiert einen Kotlin-String in einen JSON-String-Wert.
@@ -243,3 +298,13 @@ internal fun calculateLocationText(onshoreOffshoreType: String?): String {
         else -> "Wert leider nicht bekannt"
     }
 }
+
+@Serializable
+private data class NominatimResult(
+    val lat: String,
+    val lon: String,
+    val display_name: String,
+    val type: String = "",
+    val `class`: String = ""
+)
+
