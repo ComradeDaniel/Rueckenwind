@@ -257,9 +257,11 @@ fun LightningIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun WindTurbineIcon(modifier: Modifier = Modifier) {
+fun WindTurbineIcon(
+    modifier: Modifier = Modifier,
+    color: Color = AppColors.SubtitleText
+) {
     Canvas(modifier = modifier) {
-        val color = AppColors.SubtitleText
         val strokeWidth = 2.2.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height * 0.35f

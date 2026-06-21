@@ -32,6 +32,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         onSearchQueryChanged = { mapViewModel.onSearchQueryChanged(it) },
                         onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
                         onClearSearch = { mapViewModel.clearSearch() },
+                        onToggleFavorite = { mapViewModel.toggleFavorite(it) },
+                        onCollectAllClicked = { mapViewModel.collectAllScanned() },
                         currentDestination = currentDestination,
                         onDestinationSelected = { currentDestination = it },
                         modifier = Modifier.fillMaxSize()

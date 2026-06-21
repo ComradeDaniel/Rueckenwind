@@ -3,6 +3,13 @@ package com.windrad.ui.map
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,6 +66,8 @@ fun MapScreen(
     onSearchQueryChanged: (String) -> Unit,
     onSearchResultSelected: (SearchSuggestion) -> Unit,
     onClearSearch: () -> Unit,
+    onToggleFavorite: (String) -> Unit,
+    onCollectAllClicked: () -> Unit,
     currentDestination: WindradDestination,
     onDestinationSelected: (WindradDestination) -> Unit,
     modifier: Modifier = Modifier
@@ -105,6 +114,15 @@ fun MapScreen(
             }
             sheetOffsetY.animateTo(target, animationSpec = tween(300))
         }
+
+        // Auto-expand sheet when scanning finishes with results
+        LaunchedEffect(uiState.isScanning) {
+            if (!uiState.isScanning && uiState.scannedWindmills.isNotEmpty()) {
+                sheetState = SheetState.FULLY_EXPANDED
+            }
+        }
+
+
 
         // 1. Map Background
         WindradMap(
@@ -418,13 +436,42 @@ fun MapScreen(
                             )
                         }
                     } else {
-                        // Windpark count label
-                        Text(
-                            text = "${uiState.windparkCount} Windparks",
-                            color = AppColors.DarkText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (sheetState != SheetState.COLLAPSED) "In deiner Nähe" else "${uiState.windparkCount} Windparks",
+                                color = AppColors.PureDark,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = (-0.43).sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 44.dp)
+                            )
+                            if (sheetState != SheetState.COLLAPSED) {
+                                IconButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            sheetState = SheetState.COLLAPSED
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(AppColors.LightGray, CircleShape)
+                                        .align(Alignment.CenterEnd)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Schließen",
+                                        tint = AppColors.DarkGray.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -484,83 +531,106 @@ fun MapScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                                .padding(horizontal = 24.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = "In deiner Nähe",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AppColors.DarkText
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
                                 text = "${uiState.windparkCount} Windparks gefunden",
-                                fontSize = 14.sp,
-                                color = Color.Gray
+                                fontSize = 15.sp,
+                                color = Color.Gray,
+                                letterSpacing = (-0.23).sp
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
+                            Spacer(modifier = Modifier.height(4.dp))
                             
                             LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                items(listOf(
-                                    WindparkItem("Windpark Erfurt", "1 Windkraftanlage", "Aktiv"),
-                                    WindparkItem("Windpark Dessau-Halle", "2 Windkraftanlagen", "Aktiv")
-                                )) { item ->
-                                    Surface(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(16.dp),
-                                        color = Color.White.copy(alpha = 0.8f),
-                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
-                                    ) {
+                                items(uiState.scannedWindmills) { item ->
+                                    Column(modifier = Modifier.fillMaxWidth()) {
                                         Row(
-                                            modifier = Modifier.padding(16.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    onWindmillSelected(item.id)
+                                                    sheetState = SheetState.HALF_EXPANDED
+                                                }
+                                                .padding(vertical = 12.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Surface(
-                                                modifier = Modifier.size(40.dp),
-                                                shape = RoundedCornerShape(8.dp),
-                                                color = AppColors.Blue
+                                            Box(
+                                                modifier = Modifier.size(24.dp, 35.dp),
+                                                contentAlignment = Alignment.Center
                                             ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Text("🛩", fontSize = 18.sp, color = Color.White)
-                                                }
+                                                WindTurbineIcon(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    color = Color(0xFF1E1E1E)
+                                                )
                                             }
                                             Spacer(modifier = Modifier.width(16.dp))
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     text = item.name,
-                                                    fontSize = 15.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = AppColors.DarkText
+                                                    fontSize = 17.sp,
+                                                    fontWeight = FontWeight.Normal,
+                                                    color = AppColors.PureDark,
+                                                    letterSpacing = (-0.43).sp
                                                 )
                                                 Text(
-                                                    text = item.details,
-                                                    fontSize = 13.sp,
-                                                    color = Color.Gray
+                                                    text = "${item.distanceText} • ${item.capacityText}",
+                                                    fontSize = 15.sp,
+                                                    color = Color.Gray,
+                                                    letterSpacing = (-0.23).sp
                                                 )
                                             }
-                                            Surface(
-                                                color = AppColors.ActiveBadgeBg,
-                                                shape = RoundedCornerShape(8.dp)
+                                            IconButton(
+                                                onClick = { onToggleFavorite(item.id) },
+                                                modifier = Modifier.size(36.dp)
                                             ) {
-                                                Text(
-                                                    text = item.status,
-                                                    color = AppColors.ActiveBadgeText,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                StarIcon(
+                                                    isFilled = item.isFavorite,
+                                                    modifier = Modifier.size(24.dp),
+                                                    outlineColor = Color.Black
                                                 )
                                             }
                                         }
+                                        HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
                                     }
                                 }
-                                // Extra spacer to ensure content is not covered by bottom bar
                                 item {
-                                    Spacer(modifier = Modifier.height(96.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
                                 }
                             }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Button(
+                                    onClick = onCollectAllClicked,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = AppColors.Blue
+                                    ),
+                                    shape = RoundedCornerShape(25.dp),
+                                    modifier = Modifier
+                                        .width(151.dp)
+                                        .height(50.dp),
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Text(
+                                        text = "Alle einsammeln",
+                                        color = Color.White,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        letterSpacing = (-0.43).sp
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }
@@ -606,12 +676,7 @@ fun MapScreen(
             ) {
                 if (uiState.isScanning) {
                     // Scanning animated 3 dots
-                    Text(
-                        text = "•••",
-                        fontSize = 18.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    ThreeDotsLoadingAnimation()
                 } else {
                     Icon(
                         imageVector = SendIcon,
@@ -706,4 +771,142 @@ enum class SheetState {
     HALF_EXPANDED,
     FULLY_EXPANDED
 }
+
+@Composable
+fun ThreeDotsLoadingAnimation(
+    modifier: Modifier = Modifier,
+    dotSize: Dp = 6.dp,
+    dotColor: Color = Color.White,
+    gap: Dp = 4.dp
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+    
+    val offset1 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -6f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 600
+                0f at 0 with androidx.compose.animation.core.FastOutSlowInEasing
+                -6f at 150 with androidx.compose.animation.core.FastOutSlowInEasing
+                0f at 300 with androidx.compose.animation.core.FastOutSlowInEasing
+                0f at 600
+            },
+            repeatMode = RepeatMode.Restart,
+            initialStartOffset = StartOffset(0)
+        )
+    )
+
+    val offset2 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -6f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 600
+                0f at 0 with androidx.compose.animation.core.FastOutSlowInEasing
+                -6f at 150 with androidx.compose.animation.core.FastOutSlowInEasing
+                0f at 300 with androidx.compose.animation.core.FastOutSlowInEasing
+                0f at 600
+            },
+            repeatMode = RepeatMode.Restart,
+            initialStartOffset = StartOffset(150)
+        )
+    )
+
+    val offset3 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -6f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 600
+                0f at 0 with androidx.compose.animation.core.FastOutSlowInEasing
+                -6f at 150 with androidx.compose.animation.core.FastOutSlowInEasing
+                0f at 300 with androidx.compose.animation.core.FastOutSlowInEasing
+                0f at 600
+            },
+            repeatMode = RepeatMode.Restart,
+            initialStartOffset = StartOffset(300)
+        )
+    )
+
+    Row(
+        modifier = modifier.height(18.dp),
+        horizontalArrangement = Arrangement.spacedBy(gap),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(dotSize)
+                .offset(y = offset1.dp)
+                .background(dotColor, CircleShape)
+        )
+        Box(
+            modifier = Modifier
+                .size(dotSize)
+                .offset(y = offset2.dp)
+                .background(dotColor, CircleShape)
+        )
+        Box(
+            modifier = Modifier
+                .size(dotSize)
+                .offset(y = offset3.dp)
+                .background(dotColor, CircleShape)
+        )
+    }
+}
+
+@Composable
+fun StarIcon(
+    isFilled: Boolean,
+    modifier: Modifier = Modifier,
+    filledColor: Color = AppColors.Blue,
+    outlineColor: Color = Color(0xFF1E1E1E)
+) {
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val sizeMin = size.minDimension
+        val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+        val outerRadius = sizeMin / 2f
+        val innerRadius = outerRadius * 0.4f
+        
+        val path = androidx.compose.ui.graphics.Path().apply {
+            for (i in 0 until 10) {
+                val angle = i * kotlin.math.PI / 5 - kotlin.math.PI / 2
+                val radius = if (i % 2 == 0) outerRadius else innerRadius
+                val x = (center.x + kotlin.math.cos(angle) * radius).toFloat()
+                val y = (center.y + kotlin.math.sin(angle) * radius).toFloat()
+                if (i == 0) {
+                    moveTo(x, y)
+                } else {
+                    lineTo(x, y)
+                }
+            }
+            close()
+        }
+        
+        if (isFilled) {
+            drawPath(path, color = filledColor)
+            drawPath(
+                path,
+                color = filledColor,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 1.5.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                )
+            )
+        } else {
+            drawPath(
+                path,
+                color = outlineColor,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 1.5.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                )
+            )
+        }
+    }
+}
+
+
 

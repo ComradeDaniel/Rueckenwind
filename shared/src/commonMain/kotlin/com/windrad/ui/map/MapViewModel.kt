@@ -23,10 +23,14 @@ import kotlinx.coroutines.Job
  * @param driverFactory Plattformspezifische DB-Treiber-Factory
  *                      (Android: mit Context, iOS: ohne Argument)
  */
+import com.windrad.data.LocationProvider
+import kotlin.time.Clock
+
 class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
 
     private val db = createDatabase(driverFactory)
     private val repository = WindradRepository(db)
+    private val locationProvider = LocationProvider(driverFactory)
     private var searchJob: Job? = null
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -54,11 +58,50 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
     }
 
     fun onScanClicked() {
-        if (_uiState.value.isScanning) return
+        println("MapViewModel: onScanClicked triggered!")
+        if (_uiState.value.isScanning) {
+            println("MapViewModel: already scanning, skipping.")
+            return
+        }
         viewModelScope.launch {
+            println("MapViewModel: scan coroutine started")
             _uiState.update { it.copy(isScanning = true) }
-            delay(2500)
-            _uiState.update { it.copy(isScanning = false, windparkCount = 3) }
+            val startTime = Clock.System.now().toEpochMilliseconds()
+            
+            // Try to get GPS location
+            val gpsLocation = try {
+                println("MapViewModel: querying locationProvider...")
+                locationProvider.getCurrentLocation()
+            } catch (e: Exception) {
+                println("MapViewModel: locationProvider query failed: $e")
+                e.printStackTrace()
+                null
+            }
+            println("MapViewModel: gpsLocation obtained: $gpsLocation")
+            
+            val nearby = if (gpsLocation != null) {
+                println("MapViewModel: scanning coordinates: lat=${gpsLocation.first}, lon=${gpsLocation.second}")
+                repository.findWindmillsWithinRadius(gpsLocation.first, gpsLocation.second, 5.0)
+            } else {
+                println("MapViewModel: GPS location is unavailable, returning empty list (no fallback)")
+                emptyList()
+            }
+            println("MapViewModel: found ${nearby.size} nearby windmills")
+            
+            // Guarantee at least 2.5 seconds of scan progress animation for visual feedback
+            val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
+            val remainingDelay = (2500L - elapsed).coerceAtLeast(0L)
+            println("MapViewModel: waiting remaining delay: ${remainingDelay}ms")
+            delay(remainingDelay)
+            
+            _uiState.update {
+                it.copy(
+                    isScanning = false,
+                    windparkCount = nearby.size,
+                    scannedWindmills = nearby
+                )
+            }
+            println("MapViewModel: scan completed, updated state.")
         }
     }
 
@@ -124,6 +167,40 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                 searchQuery = "",
                 searchSuggestions = emptyList()
             )
+        }
+    }
+
+    fun toggleFavorite(id: String) {
+        viewModelScope.launch {
+            val scannedList = _uiState.value.scannedWindmills
+            val item = scannedList.find { it.id == id } ?: return@launch
+            val newFavorite = !item.isFavorite
+            repository.updateCollectionStatus(id, newFavorite)
+            
+            _uiState.update { state ->
+                state.copy(
+                    scannedWindmills = state.scannedWindmills.map { w ->
+                        if (w.id == id) w.copy(isFavorite = newFavorite) else w
+                    }
+                )
+            }
+            loadWindmillGeoJson()
+        }
+    }
+
+    fun collectAllScanned() {
+        val scannedIds = _uiState.value.scannedWindmills.map { it.id }
+        if (scannedIds.isEmpty()) return
+        viewModelScope.launch {
+            repository.collectAll(scannedIds)
+            _uiState.update { state ->
+                state.copy(
+                    scannedWindmills = state.scannedWindmills.map { item ->
+                        item.copy(isFavorite = true)
+                    }
+                )
+            }
+            loadWindmillGeoJson()
         }
     }
 }

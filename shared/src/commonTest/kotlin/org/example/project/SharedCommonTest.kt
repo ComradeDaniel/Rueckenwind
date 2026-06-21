@@ -120,4 +120,38 @@ class SharedCommonTest {
         val text = calculateLocationText(null)
         assertEquals("Wert leider nicht bekannt", text)
     }
+
+    @Test
+    fun testUrlEncode() {
+        val encoded = com.windrad.data.urlEncode("München & Hamburg")
+        // Check that German umlaut 'ü' and special character '&' and space ' ' are encoded
+        kotlin.test.assertTrue(encoded.contains("M%C3%BCnchen") || encoded.contains("M%FCnchen"))
+        kotlin.test.assertTrue(encoded.contains("%20"))
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun testHttpUtilAndNominatimParser() = kotlinx.coroutines.test.runTest {
+        val encoded = com.windrad.data.urlEncode("Erfurt")
+        val url = "https://nominatim.openstreetmap.org/search?q=$encoded&format=json&limit=2&addressdetails=1"
+        val response = com.windrad.data.HttpUtil.get(url)
+        println("testHttpUtilAndNominatimParser: Response = $response")
+        
+        if (response != null) {
+            val jsonParser = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+            val results = jsonParser.decodeFromString<List<TestNominatimResult>>(response)
+            kotlin.test.assertTrue(results.isNotEmpty())
+            val first = results.first()
+            kotlin.test.assertTrue(first.lat.isNotEmpty())
+            kotlin.test.assertTrue(first.lon.isNotEmpty())
+            kotlin.test.assertTrue(first.display_name.isNotEmpty())
+        }
+    }
 }
+
+@kotlinx.serialization.Serializable
+private data class TestNominatimResult(
+    val lat: String,
+    val lon: String,
+    val display_name: String
+)

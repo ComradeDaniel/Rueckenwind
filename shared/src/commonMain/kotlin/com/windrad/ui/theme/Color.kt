@@ -41,4 +41,8 @@ object AppColors {
     // Custom Badge Colors
     val ActiveBadgeBg = Color(0xFFE2F0D9)
     val ActiveBadgeText = Color(0xFF385723)
+    val PlannedBadgeBg = Color(0xFFFFF9E6)
+    val PlannedBadgeText = Color(0xFF8A6D00)
+    val InactiveBadgeBg = Color(0xFFE5E5EA)
+    val InactiveBadgeText = Color(0xFF555555)
 }

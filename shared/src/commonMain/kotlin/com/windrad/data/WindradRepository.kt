@@ -3,6 +3,7 @@ package com.windrad.data
 import com.windrad.database.WindradDatabase
 import com.windrad.ui.map.WindmillDetails
 import com.windrad.ui.map.SearchSuggestion
+import com.windrad.ui.map.NearbyWindmill
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
@@ -164,6 +165,103 @@ class WindradRepository(private val db: WindradDatabase) {
             emptyList()
         }
     }
+
+    suspend fun findWindmillsWithinRadius(lat: Double, lon: Double, radiusKm: Double): List<NearbyWindmill> = withContext(Dispatchers.Default) {
+        val latDiff = radiusKm / 111.0
+        val lonDiff = radiusKm / (111.0 * kotlin.math.cos(lat * kotlin.math.PI / 180.0))
+        
+        val minLat = lat - latDiff
+        val maxLat = lat + latDiff
+        val minLon = lon - lonDiff
+        val maxLon = lon + lonDiff
+        
+        val rows = db.windradDbQueries.selectWindmillsInBoundingBox(
+            minLat = minLat,
+            maxLat = maxLat,
+            minLon = minLon,
+            maxLon = maxLon
+        ).executeAsList()
+        
+        rows.mapNotNull { row ->
+            val wLat = row.latitude_wgs84 ?: return@mapNotNull null
+            val wLon = row.longitude_wgs84 ?: return@mapNotNull null
+            val distance = calculateDistanceKm(lat, lon, wLat, wLon)
+            if (distance <= radiusKm) {
+                val displayName = row.unit_display_name ?: row.unit_MaStR_ID
+                
+                val statusText = when {
+                    row.operating_status?.contains("Planung", ignoreCase = true) == true -> "In Planung"
+                    row.operating_status?.contains("Betrieb", ignoreCase = true) == true -> "Aktiv"
+                    else -> "Inaktiv"
+                }
+                
+                val capacityText = if (row.unit_net_nominal_capacity != null && row.unit_net_nominal_capacity > 0.0) {
+                    formatCapacity(row.unit_net_nominal_capacity)
+                } else {
+                    "Leistung unbekannt"
+                }
+                
+                NearbyWindmill(
+                    id = row.unit_MaStR_ID,
+                    name = displayName,
+                    distanceText = formatDistance(distance),
+                    status = statusText,
+                    capacityText = capacityText,
+                    distance = distance,
+                    isFavorite = row.collected == 1L
+                )
+            } else {
+                null
+            }
+        }.sortedBy { it.distance }
+    }
+
+    suspend fun collectAll(ids: List<String>) = withContext(Dispatchers.Default) {
+        db.windradDbQueries.transaction {
+            ids.forEach { id ->
+                db.windradDbQueries.updateCollectionStatus(id, true)
+            }
+        }
+    }
+
+    suspend fun updateCollectionStatus(id: String, collected: Boolean) = withContext(Dispatchers.Default) {
+        db.windradDbQueries.updateCollectionStatus(id, collected)
+    }
+
+    private fun formatCapacity(capacity: Double): String {
+        val value = capacity.toInt()
+        return if (value >= 1000) {
+            val thousands = value / 1000
+            val remainder = value % 1000
+            val remainderStr = remainder.toString().padStart(3, '0')
+            "$thousands.$remainderStr kW"
+        } else {
+            "$value kW"
+        }
+    }
+
+    private fun calculateDistanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371.0 // Earth radius in km
+        val dLat = (lat2 - lat1) * kotlin.math.PI / 180.0
+        val dLon = (lon2 - lon1) * kotlin.math.PI / 180.0
+        val a = kotlin.math.sin(dLat / 2.0) * kotlin.math.sin(dLat / 2.0) +
+                kotlin.math.cos(lat1 * kotlin.math.PI / 180.0) * kotlin.math.cos(lat2 * kotlin.math.PI / 180.0) *
+                kotlin.math.sin(dLon / 2.0) * kotlin.math.sin(dLon / 2.0)
+        val c = 2.0 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1.0 - a))
+        return r * c
+    }
+
+    private fun formatDistance(distance: Double): String {
+        return if (distance < 1.0) {
+            val meters = (distance * 1000).roundToInt()
+            "$meters m entfernt"
+        } else {
+            val rounded = (distance * 10.0).roundToInt() / 10.0
+            val formatted = rounded.toString().replace('.', ',')
+            "$formatted km entfernt"
+        }
+    }
+
 
 
 

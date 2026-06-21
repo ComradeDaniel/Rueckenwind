@@ -23,6 +23,17 @@ data class MapUiState(
     
     val searchQuery: String = "",
     val searchSuggestions: List<SearchSuggestion> = emptyList(),
+    val scannedWindmills: List<NearbyWindmill> = emptyList(),
+)
+
+data class NearbyWindmill(
+    val id: String,
+    val name: String,
+    val distanceText: String,
+    val status: String,
+    val capacityText: String,
+    val distance: Double,
+    val isFavorite: Boolean = false
 )
 
 data class SearchSuggestion(
