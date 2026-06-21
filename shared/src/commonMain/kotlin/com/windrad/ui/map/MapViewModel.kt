@@ -2,16 +2,18 @@ package com.windrad.ui.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.windrad.data.LocationProvider
 import com.windrad.data.WindradRepository
 import com.windrad.database.DatabaseDriverFactory
 import com.windrad.database.createDatabase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
+import kotlin.time.Clock
 
 /**
  * ViewModel für den Karten-Screen.
@@ -23,8 +25,7 @@ import kotlinx.coroutines.Job
  * @param driverFactory Plattformspezifische DB-Treiber-Factory
  *                      (Android: mit Context, iOS: ohne Argument)
  */
-import com.windrad.data.LocationProvider
-import kotlin.time.Clock
+
 
 class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
 
@@ -81,16 +82,22 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
             
             val nearby = if (gpsLocation != null) {
                 println("MapViewModel: scanning coordinates: lat=${gpsLocation.first}, lon=${gpsLocation.second}")
-                repository.findWindmillsWithinRadius(gpsLocation.first, gpsLocation.second, 5.0)
+                // Measure DB query time
+                val dbStart = Clock.System.now().toEpochMilliseconds()
+                val result = repository.findWindmillsWithinRadius(gpsLocation.first, gpsLocation.second, 5.0)
+                val dbElapsed = Clock.System.now().toEpochMilliseconds() - dbStart
+                println("MapViewModel: DB query took ${dbElapsed}ms, returned ${result.size} windmills")
+                result
             } else {
                 println("MapViewModel: GPS location is unavailable, returning empty list (no fallback)")
                 emptyList()
             }
             println("MapViewModel: found ${nearby.size} nearby windmills")
             
-            // Guarantee at least 2.5 seconds of scan progress animation for visual feedback
+            // Ensure at least 0.5 s of scan animation for visual feedback
             val elapsed = Clock.System.now().toEpochMilliseconds() - startTime
-            val remainingDelay = (2500L - elapsed).coerceAtLeast(0L)
+            val minimumDelay = 500L // 0.5 seconds
+            val remainingDelay = (minimumDelay - elapsed).coerceAtLeast(0L)
             println("MapViewModel: waiting remaining delay: ${remainingDelay}ms")
             delay(remainingDelay)
             
@@ -98,10 +105,13 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                 it.copy(
                     isScanning = false,
                     windparkCount = nearby.size,
-                    scannedWindmills = nearby
+                    scannedWindmills = nearby,
+                    centerLatitude = gpsLocation?.first ?: it.centerLatitude,
+                    centerLongitude = gpsLocation?.second ?: it.centerLongitude,
+                    zoom = if (gpsLocation != null) 12.0 else it.zoom
                 )
             }
-            println("MapViewModel: scan completed, updated state.")
+            println("MapViewModel: scan completed, updated state and focused region at lat=${gpsLocation?.first}, lon=${gpsLocation?.second}")
         }
     }
 

@@ -29,6 +29,7 @@ data class MapUiState(
 data class NearbyWindmill(
     val id: String,
     val name: String,
+    val city: String,
     val distanceText: String,
     val status: String,
     val capacityText: String,

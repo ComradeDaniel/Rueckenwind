@@ -27,34 +27,16 @@ actual class LocationProvider(private val driverFactory: DatabaseDriverFactory) 
             return@suspendCoroutine
         }
         
-        // 1. Try GPS Last Known Location
-        val gpsLoc = try { locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER) } catch (e: SecurityException) { null }
-        if (gpsLoc != null) {
-            continuation.resume(Pair(gpsLoc.latitude, gpsLoc.longitude))
-            return@suspendCoroutine
-        }
-        
-        // 2. Try Network Last Known Location
-        val netLoc = try { locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) } catch (e: SecurityException) { null }
-        if (netLoc != null) {
-            continuation.resume(Pair(netLoc.latitude, netLoc.longitude))
-            return@suspendCoroutine
-        }
-        
-        // 3. Fallback to requesting a single update
+        // Always request a fresh single location update to avoid stale cached locations
         val provider = if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             LocationManager.GPS_PROVIDER
         } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             LocationManager.NETWORK_PROVIDER
         } else {
-            null
-        }
-        
-        if (provider == null) {
             continuation.resume(null)
             return@suspendCoroutine
         }
-        
+
         val listener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
                 locationManager.removeUpdates(this)
@@ -64,7 +46,7 @@ actual class LocationProvider(private val driverFactory: DatabaseDriverFactory) 
             override fun onProviderEnabled(provider: String) {}
             override fun onProviderDisabled(provider: String) {}
         }
-        
+
         try {
             locationManager.requestSingleUpdate(provider, listener, Looper.getMainLooper())
         } catch (e: SecurityException) {

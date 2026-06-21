@@ -204,6 +204,7 @@ class WindradRepository(private val db: WindradDatabase) {
                 NearbyWindmill(
                     id = row.unit_MaStR_ID,
                     name = displayName,
+                    city = row.city ?: "",
                     distanceText = formatDistance(distance),
                     status = statusText,
                     capacityText = capacityText,

@@ -571,15 +571,21 @@ fun MapScreen(
                                             Spacer(modifier = Modifier.width(16.dp))
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
-                                                    text = item.name,
+                                                    text = item.city,
                                                     fontSize = 17.sp,
                                                     fontWeight = FontWeight.Normal,
                                                     color = AppColors.PureDark,
                                                     letterSpacing = (-0.43).sp
                                                 )
                                                 Text(
-                                                    text = "${item.distanceText} • ${item.capacityText}",
+                                                    text = item.name,
                                                     fontSize = 15.sp,
+                                                    color = Color.Gray,
+                                                    letterSpacing = (-0.23).sp
+                                                )
+                                                Text(
+                                                    text = item.distanceText,
+                                                    fontSize = 13.sp,
                                                     color = Color.Gray,
                                                     letterSpacing = (-0.23).sp
                                                 )
