@@ -336,7 +336,9 @@ fun MapScreen(
             (screenHeight.toPx() - sheetOffsetY.value - bottomMarginPx).toDp().coerceAtLeast(0.dp)
         }
 
-        Surface(
+        val sheetBgAlpha = progress * 0.8f
+
+        GlassySurface(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset { IntOffset(0, sheetOffsetY.value.toInt()) }
@@ -344,9 +346,9 @@ fun MapScreen(
                 .fillMaxWidth()
                 .height(sheetHeight),
             shape = RoundedCornerShape(40.dp),
-            color = AppColors.WhiteGlass, // 95% White Glass for uniform milky effect
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)), // sharp white glass border edge
-            shadowElevation = 12.dp // stronger shadow to create height hierarchy
+            cornerRadius = 40.dp,
+            color = Color.White.copy(alpha = sheetBgAlpha),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -755,6 +757,7 @@ fun MapScreen(
                 WindradBottomBar(
                     currentDestination = currentDestination,
                     onDestinationSelected = onDestinationSelected,
+                    useGlassyBackground = false,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

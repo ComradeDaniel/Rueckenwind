@@ -19,24 +19,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.windrad.ui.theme.AppColors
 
+import com.windrad.ui.map.GlassySurface
+import androidx.compose.ui.draw.shadow
+
 @Composable
 fun WindradBottomBar(
     currentDestination: WindradDestination,
     onDestinationSelected: (WindradDestination) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    useGlassyBackground: Boolean = true
 ) {
-    Surface(
-        modifier = modifier
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 16.dp)
-            .widthIn(max = 380.dp)
-            .fillMaxWidth()
-            .height(64.dp),
-        shape = RoundedCornerShape(32.dp),
-        color = AppColors.WhiteGlass,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.8f)), // sharp white glass border edge
-        shadowElevation = 16.dp // High elevation to cast shadow onto the bottom sheet
-    ) {
+    val barModifier = modifier
+        .padding(horizontal = 24.dp)
+        .padding(bottom = 16.dp)
+        .widthIn(max = 380.dp)
+        .fillMaxWidth()
+        .requiredHeight(64.dp)
+        .shadow(
+            elevation = 4.dp,
+            shape = RoundedCornerShape(32.dp),
+            clip = false
+        )
+
+    val contentBlock = @Composable {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -90,6 +95,27 @@ fun WindradBottomBar(
                     }
                 }
             }
+        }
+    }
+
+    if (useGlassyBackground) {
+        GlassySurface(
+            modifier = barModifier,
+            shape = RoundedCornerShape(32.dp),
+            cornerRadius = 32.dp,
+            color = Color.White,
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.8f))
+        ) {
+            contentBlock()
+        }
+    } else {
+        Surface(
+            modifier = barModifier,
+            shape = RoundedCornerShape(32.dp),
+            color = Color.White,
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
+        ) {
+            contentBlock()
         }
     }
 }
