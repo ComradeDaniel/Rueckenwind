@@ -68,11 +68,16 @@ fun WindradBottomBar(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
+                            val iconModifier = if (destination == WindradDestination.COLLECTION) {
+                                Modifier.size(width = 34.dp, height = 22.dp)
+                            } else {
+                                Modifier.size(24.dp)
+                            }
                             Icon(
                                 imageVector = destination.icon,
                                 contentDescription = destination.label,
                                 tint = contentColor,
-                                modifier = Modifier.size(24.dp)
+                                modifier = iconModifier
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
