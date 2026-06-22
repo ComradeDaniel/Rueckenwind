@@ -26,12 +26,9 @@ import androidx.compose.ui.draw.shadow
 fun WindradBottomBar(
     currentDestination: WindradDestination,
     onDestinationSelected: (WindradDestination) -> Unit,
-    modifier: Modifier = Modifier,
-    useGlassyBackground: Boolean = true
+    modifier: Modifier = Modifier
 ) {
     val barModifier = modifier
-        .padding(horizontal = 24.dp)
-        .padding(bottom = 16.dp)
         .widthIn(max = 380.dp)
         .fillMaxWidth()
         .requiredHeight(64.dp)
@@ -49,7 +46,7 @@ fun WindradBottomBar(
         ) {
             WindradDestination.entries.forEach { destination ->
                 val selected = currentDestination == destination
-                val contentColor = if (selected) MaterialTheme.colorScheme.primary else AppColors.SubtitleText
+                val contentColor = if (selected) MaterialTheme.colorScheme.primary else AppColors.DarkIcon
                 
                 Box(
                     modifier = Modifier
@@ -63,34 +60,37 @@ fun WindradBottomBar(
                         color = if (selected) AppColors.SelectedItemOverlay else Color.Transparent,
                         shape = RoundedCornerShape(percent = 50)
                     ) {
-                        Column(
+                        Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
                                 ) { onDestinationSelected(destination) },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            contentAlignment = Alignment.Center
                         ) {
-                            val iconModifier = if (destination == WindradDestination.COLLECTION) {
-                                Modifier.size(width = 34.dp, height = 22.dp)
-                            } else {
-                                Modifier.size(24.dp)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                val iconModifier = if (destination == WindradDestination.COLLECTION) {
+                                    Modifier.size(width = 34.dp, height = 22.dp)
+                                } else {
+                                    Modifier.size(24.dp)
+                                }
+                                Icon(
+                                    imageVector = destination.icon,
+                                    contentDescription = destination.label,
+                                    tint = contentColor,
+                                    modifier = iconModifier
+                                )
+                                Text(
+                                    text = destination.label,
+                                    color = contentColor,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                )
                             }
-                            Icon(
-                                imageVector = destination.icon,
-                                contentDescription = destination.label,
-                                tint = contentColor,
-                                modifier = iconModifier
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = destination.label,
-                                color = contentColor,
-                                fontSize = 11.sp,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                            )
                         }
                     }
                 }
@@ -98,24 +98,12 @@ fun WindradBottomBar(
         }
     }
 
-    if (useGlassyBackground) {
-        GlassySurface(
-            modifier = barModifier,
-            shape = RoundedCornerShape(32.dp),
-            cornerRadius = 32.dp,
-            color = Color.White,
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.8f))
-        ) {
-            contentBlock()
-        }
-    } else {
-        Surface(
-            modifier = barModifier,
-            shape = RoundedCornerShape(32.dp),
-            color = Color.White,
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
-        ) {
-            contentBlock()
-        }
+    Surface(
+        modifier = barModifier,
+        shape = RoundedCornerShape(32.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
+    ) {
+        contentBlock()
     }
 }

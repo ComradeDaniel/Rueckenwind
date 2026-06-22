@@ -799,8 +799,10 @@ fun MapScreen(
                 WindradBottomBar(
                     currentDestination = currentDestination,
                     onDestinationSelected = onDestinationSelected,
-                    useGlassyBackground = false,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 16.dp)
                 )
             }
         }

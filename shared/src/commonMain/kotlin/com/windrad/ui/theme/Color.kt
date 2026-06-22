@@ -14,6 +14,7 @@ object AppColors {
     // UI Neutrals & Texts
     val DarkText = Color(0xFF1A1C1E)     // OnBackground / OnSurface / primary text
     val SubtitleText = Color(0xFF565E71) // Secondary text color / unselected icon
+    val DarkIcon = Color(0xFF1E1E1E)     // Unselected tab icon / design dark grey
     val LightGray = Color(0xFFE5E5EA)    // iOS system light gray
     val DarkGray = Color(0xFF3C3C43)     // iOS label/text secondary
     val PureDark = Color(0xFF1A1A1A)     // Scan title / very dark
