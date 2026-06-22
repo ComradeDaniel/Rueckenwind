@@ -202,7 +202,7 @@ fun MapScreen(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Suchen",
-                        tint = Color.Gray,
+                        tint = AppColors.DarkIcon,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -215,7 +215,7 @@ fun MapScreen(
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         textStyle = androidx.compose.ui.text.TextStyle(
-                            color = AppColors.DarkText,
+                            color = AppColors.DarkIcon,
                             fontSize = 15.sp
                         ),
                         keyboardOptions = KeyboardOptions(
@@ -234,7 +234,7 @@ fun MapScreen(
                                 if (uiState.searchQuery.isEmpty()) {
                                     Text(
                                         text = "Suchen",
-                                        color = Color.Gray,
+                                        color = AppColors.DarkIcon.copy(alpha = 0.5f),
                                         fontSize = 15.sp
                                     )
                                 }
@@ -247,7 +247,7 @@ fun MapScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Löschen",
-                            tint = Color.Gray,
+                            tint = AppColors.DarkIcon,
                             modifier = Modifier
                                 .size(20.dp)
                                 .clickable {
@@ -258,7 +258,7 @@ fun MapScreen(
                         Icon(
                             imageVector = MicIcon,
                             contentDescription = "Sprachsuche",
-                            tint = Color.Gray,
+                            tint = AppColors.DarkIcon,
                             modifier = Modifier.size(20.dp)
                         )
                     }
