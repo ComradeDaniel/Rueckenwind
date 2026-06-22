@@ -72,7 +72,7 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
             // Try to get GPS location
             val gpsLocation = try {
                 println("MapViewModel: querying locationProvider...")
-                locationProvider.getCurrentLocation()
+                locationProvider.getCurrentLocat    ion()
             } catch (e: Exception) {
                 println("MapViewModel: locationProvider query failed: $e")
                 e.printStackTrace()

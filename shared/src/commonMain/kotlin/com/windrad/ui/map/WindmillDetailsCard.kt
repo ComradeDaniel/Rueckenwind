@@ -262,7 +262,7 @@ fun WindTurbineIcon(
     color: Color = AppColors.SubtitleText
 ) {
     Canvas(modifier = modifier) {
-        val strokeWidth = 2.2.dp.toPx()
+        val strokeWidth = 3.5.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height * 0.35f
         val hubRadius = strokeWidth / 2f
@@ -285,7 +285,7 @@ fun WindTurbineIcon(
 fun WindTurbineRotorIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val color = AppColors.SubtitleText
-        val strokeWidth = 2.2.dp.toPx()
+        val strokeWidth = 3.5.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height * 0.35f
         val hubRadius = strokeWidth / 2f
@@ -428,7 +428,7 @@ fun WindTurbineHorizontalIcon(modifier: Modifier = Modifier) {
 fun WindTurbineLocationIcon(isOnshore: Boolean, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val color = AppColors.SubtitleText
-        val strokeWidth = 2.2.dp.toPx()
+        val strokeWidth = 3.5.dp.toPx()
         val centerX = size.width / 2f
         val centerY = size.height * 0.35f
         val hubRadius = strokeWidth / 2f

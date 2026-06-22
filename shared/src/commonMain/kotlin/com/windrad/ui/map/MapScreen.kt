@@ -57,6 +57,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.Image
+import io.github.alexzhirkevich.compottie.LottieCompositionSpec
+import io.github.alexzhirkevich.compottie.rememberLottieComposition
+import io.github.alexzhirkevich.compottie.animateLottieCompositionAsState
+import io.github.alexzhirkevich.compottie.rememberLottiePainter
+import windrad.shared.generated.resources.Res
 
 @Composable
 fun MapScreen(
@@ -92,8 +98,46 @@ fun MapScreen(
         
         // Draggable sheet offset state
         var sheetState by remember { mutableStateOf(SheetState.COLLAPSED) }
+        var isDragging by remember { mutableStateOf(false) }
         val sheetOffsetY = remember { Animatable(collapsedOffsetPx) }
         
+        // Calculate progress specifically from contentOffsetPx (HALF_EXPANDED) to maxExpandedOffsetPx (FULLY_EXPANDED)
+        val fullyExpandedProgress = remember(contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value, sheetState, isDragging) {
+            if (sheetState == SheetState.FULLY_EXPANDED || (isDragging && sheetOffsetY.value < contentOffsetPx)) {
+                val range = contentOffsetPx - maxExpandedOffsetPx
+                if (range > 0f) {
+                    ((contentOffsetPx - sheetOffsetY.value) / range).coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
+            } else {
+                0f
+            }
+        }
+        
+        // Load Lottie File
+        var lottieJsonString by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(Unit) {
+            try {
+                lottieJsonString = Res.readBytes("files/windrad_animation.json").decodeToString()
+            } catch (e: Exception) {
+                println("Failed to load Lottie resource: $e")
+            }
+        }
+        
+        val compositionSpec = if (lottieJsonString != null) {
+            LottieCompositionSpec.JsonString(lottieJsonString!!)
+        } else {
+            LottieCompositionSpec.JsonString("")
+        }
+        
+        val composition by rememberLottieComposition(compositionSpec)
+        
+        val lottieProgress by animateLottieCompositionAsState(
+            composition = composition,
+            iterations = Int.MAX_VALUE
+        )
+
         // Calculate expansion progress (0f = collapsed, 1f = fully expanded)
         val progress = remember(collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value) {
             val targetOffset = if (uiState.selectedWindmill != null) contentOffsetPx else maxExpandedOffsetPx
@@ -113,13 +157,6 @@ fun MapScreen(
                 SheetState.FULLY_EXPANDED -> maxExpandedOffsetPx
             }
             sheetOffsetY.animateTo(target, animationSpec = tween(300))
-        }
-
-        // Auto-expand sheet when scanning finishes with results
-        LaunchedEffect(uiState.isScanning) {
-            if (!uiState.isScanning && uiState.scannedWindmills.isNotEmpty()) {
-                sheetState = SheetState.FULLY_EXPANDED
-            }
         }
 
 
@@ -321,7 +358,14 @@ fun MapScreen(
                         .fillMaxWidth()
                         .pointerInput(collapsedOffsetPx, maxExpandedOffsetPx, contentOffsetPx) {
                             detectDragGestures(
+                                onDragStart = {
+                                    isDragging = true
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                },
                                 onDragEnd = {
+                                    isDragging = false
                                     val targets = if (uiState.selectedWindmill != null) {
                                         listOf(
                                             collapsedOffsetPx to SheetState.COLLAPSED,
@@ -489,14 +533,81 @@ fun MapScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            val hash = uiState.selectedWindmill.name.hashCode()
+                            val windSpeed = 15 + (kotlin.math.abs(hash) % 36)
+                            val maxPower = 1.5 + (kotlin.math.abs(hash) % 40) / 10.0
+                            val currentPower = (maxPower * (windSpeed / 50.0)).coerceAtMost(maxPower)
+                            val powerStr = "${(currentPower * 10).toInt() / 10.0} MW"
+
+                            if (fullyExpandedProgress > 0f) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height((200 * fullyExpandedProgress).dp)
+                                        .alpha(fullyExpandedProgress),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(48.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "$windSpeed km/h",
+                                                color = AppColors.PureDark,
+                                                fontSize = 17.sp,
+                                                fontWeight = FontWeight.Normal,
+                                                letterSpacing = (-0.43).sp
+                                            )
+                                            Text(
+                                                text = powerStr,
+                                                color = AppColors.PureDark,
+                                                fontSize = 17.sp,
+                                                fontWeight = FontWeight.Normal,
+                                                letterSpacing = (-0.43).sp
+                                            )
+                                        }
+                                        HorizontalDivider(color = Color.Black.copy(alpha = 0.08f))
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(1f),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (lottieJsonString != null && composition != null) {
+                                            Image(
+                                                painter = rememberLottiePainter(
+                                                    composition = composition,
+                                                    progress = { lottieProgress }
+                                                ),
+                                                contentDescription = "Windrad Animation",
+                                                modifier = Modifier.size(306.dp, 143.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
                             WindmillDetailsCard(
                                 details = uiState.selectedWindmill,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .onGloballyPositioned { coordinates ->
-                                        detailsCardHeightDp = with(density) { coordinates.size.height.toDp() }
+                                        detailsCardHeightDp = with(density) { 
+                                            coordinates.size.height.toDp() 
+                                        }
                                     }
                             )
                             Spacer(modifier = Modifier.height(16.dp))

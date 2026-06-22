@@ -82,6 +82,7 @@ kotlin {
                 exclude(group = "org.maplibre.gl", module = "android-sdk")
             }
             implementation(libs.compose.material.icons.core)
+            implementation("io.github.alexzhirkevich:compottie:2.2.3")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -313,10 +313,10 @@ class WindradPinPainter(val pinColor: Color) : Painter() {
 
         // ── Windrad-Icon (Rotor-Symbol in Weiß) ──────────────────────────────
         val rotorCy = centerY - 2.dp.toPx()
-        val dotRadius = 0.9.dp.toPx()
-        val stroke = dotRadius * 2f
+        val dotRadius = 1.1.dp.toPx()
+        val stroke = dotRadius * 2.3f
         val gap = dotRadius
-        val bladeLen = dotRadius * 4f
+        val bladeLen = dotRadius * 4.2f
         val poleLen = dotRadius * 8f
 
         drawWindmill(
