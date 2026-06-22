@@ -638,6 +638,48 @@ fun MapScreen(
                                 modifier = Modifier.padding(horizontal = 24.dp),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Button(
+                                onClick = onScanClicked,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = AppColors.Blue
+                                ),
+                                shape = RoundedCornerShape(25.dp),
+                                modifier = Modifier
+                                    .width(151.dp)
+                                    .height(50.dp),
+                                enabled = !uiState.isScanning,
+                                elevation = ButtonDefaults.buttonElevation(
+                                    defaultElevation = 6.dp,
+                                    pressedElevation = 2.dp
+                                ),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    if (uiState.isScanning) {
+                                        ThreeDotsLoadingAnimation()
+                                    } else {
+                                        Icon(
+                                            imageVector = SendIcon,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier
+                                                .rotate(-45f)
+                                                .size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Scannen",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
                         }
                     } else {
                         // List of Found Windparks
