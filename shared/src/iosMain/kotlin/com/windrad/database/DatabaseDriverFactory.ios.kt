@@ -18,7 +18,7 @@ import platform.Foundation.NSUserDomainMask
  * Bei App-Updates wird die DB NICHT überschrieben, damit der
  * Sammelfortschritt des Nutzers erhalten bleibt.
  */
-actual class DatabaseDriverFactory {
+actual class DatabaseDriverFactory actual constructor(context: Any) {
 
     actual fun createDriver(): SqlDriver {
         val dbName = "windrad.db"

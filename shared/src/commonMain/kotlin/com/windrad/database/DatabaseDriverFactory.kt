@@ -7,7 +7,7 @@ import app.cash.sqldelight.db.SqlDriver
  * Jede Plattform (Android/iOS) liefert ihre eigene Implementierung,
  * die die pre-populated windrad.db aus den Assets/Bundle-Ressourcen kopiert.
  */
-expect class DatabaseDriverFactory {
+expect class DatabaseDriverFactory(context: Any) {
     fun createDriver(): SqlDriver
 }
 

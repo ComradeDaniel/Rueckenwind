@@ -14,11 +14,13 @@ import java.io.FileOutputStream
  * Bei App-Updates wird die DB NICHT überschrieben, damit der
  * Sammelfortschritt des Nutzers erhalten bleibt.
  */
-actual class DatabaseDriverFactory(private val context: Context) {
+actual class DatabaseDriverFactory actual constructor(private val context: Any) {
+
+    private val androidContext = context as Context
 
     actual fun createDriver(): SqlDriver {
         val dbName = "windrad.db"
-        val dbFile = context.getDatabasePath(dbName)
+        val dbFile = androidContext.getDatabasePath(dbName)
 
         if (!dbFile.exists()) {
             copyDatabaseFromAssets(dbFile, dbName)
@@ -26,14 +28,14 @@ actual class DatabaseDriverFactory(private val context: Context) {
 
         return AndroidSqliteDriver(
             schema = WindradDatabase.Schema,
-            context = context,
+            context = androidContext,
             name = dbName
         )
     }
 
     private fun copyDatabaseFromAssets(dbFile: File, dbName: String) {
         dbFile.parentFile?.mkdirs()
-        context.assets.open("databases/$dbName").use { input ->
+        androidContext.assets.open("databases/$dbName").use { input ->
             FileOutputStream(dbFile).use { output ->
                 input.copyTo(output)
             }
