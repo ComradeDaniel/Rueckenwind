@@ -150,11 +150,26 @@ fun MapScreen(
 
         // Load Lottie File
         var lottieJsonString by remember { mutableStateOf<String?>(null) }
-        LaunchedEffect(Unit) {
+        val animationPath = remember(uiState.selectedWindmill) {
+            val details = uiState.selectedWindmill
+            if (details == null) {
+                "files/new_hori_anim.json"
+            } else {
+                val isVertical = details.technologyText == "Vertikalläufer"
+                if (isVertical) {
+                    "files/animation_vertikallaufer.json"
+                } else if (details.isOnshore) {
+                    "files/new_hori_anim.json"
+                } else {
+                    "files/animation_windrad_wasser.json"
+                }
+            }
+        }
+        LaunchedEffect(animationPath) {
             try {
-                lottieJsonString = Res.readBytes("files/windrad_animation.json").decodeToString()
+                lottieJsonString = Res.readBytes(animationPath).decodeToString()
             } catch (e: Exception) {
-                println("Failed to load Lottie resource: $e")
+                println("Failed to load Lottie resource $animationPath: $e")
             }
         }
 
