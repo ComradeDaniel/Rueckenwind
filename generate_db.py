@@ -33,7 +33,11 @@ except ImportError:
 # --- Konfiguration ---
 
 SCRIPT_DIR = Path(__file__).parent
-WINDMILL_SOURCE = SCRIPT_DIR / "alleWindräder.numbers"
+
+WINDMILL_SOURCE_NUMBERS = SCRIPT_DIR / "alleWindräder.numbers"
+WINDMILL_SOURCE_CSV = SCRIPT_DIR / "alleWindräder.csv"
+WINDMILL_SOURCE = WINDMILL_SOURCE_NUMBERS if WINDMILL_SOURCE_NUMBERS.exists() else WINDMILL_SOURCE_CSV
+
 SIGHTS_SOURCE = SCRIPT_DIR / "sights.csv"
 DB_OUTPUT = SCRIPT_DIR / "shared" / "src" / "androidMain" / "assets" / "databases" / "windrad.db"
 
