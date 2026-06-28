@@ -336,7 +336,10 @@ fun MapScreen(
             (screenHeight.toPx() - sheetOffsetY.value - bottomMarginPx).toDp().coerceAtLeast(0.dp)
         }
 
-        val sheetBgAlpha = progress * 0.8f
+        // On Android the sheet looks "missing" when collapsed at the bottom because
+        // `progress` becomes ~0, which would make the glass background alpha ~0 as well.
+        // Keep a small minimum opacity so the glass surface is always visible.
+        val sheetBgAlpha = (0.4f + progress * 0.62f).coerceIn(0f, 0.85f)
 
         GlassySurface(
             modifier = Modifier
