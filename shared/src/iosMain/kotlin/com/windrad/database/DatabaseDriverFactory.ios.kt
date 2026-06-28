@@ -33,9 +33,14 @@ actual class DatabaseDriverFactory actual constructor(context: Any) {
         val dbPath = "$documentsPath/$dbName"
 
         if (!fileManager.fileExistsAtPath(dbPath)) {
-            val bundlePath = NSBundle.mainBundle.pathForResource("windrad", ofType = "db")
-            if (bundlePath != null) {
-                fileManager.copyItemAtPath(bundlePath, toPath = dbPath, error = null)
+            val bundlePath = requireNotNull(
+                NSBundle.mainBundle.pathForResource("windrad", ofType = "db")
+            ) { "Pre-populated database windrad.db not found in app bundle resources." }
+
+            fileManager.copyItemAtPath(bundlePath, toPath = dbPath, error = null)
+
+            check(fileManager.fileExistsAtPath(dbPath)) {
+                "Failed to copy pre-populated database to $dbPath"
             }
         }
 
