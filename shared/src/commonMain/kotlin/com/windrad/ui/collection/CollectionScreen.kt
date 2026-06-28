@@ -30,9 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -40,28 +38,16 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.windrad.ui.collection.kpi.Co2BarChart
+import com.windrad.ui.collection.kpi.MwhBarChart
+import com.windrad.ui.collection.kpi.NachhaltigkeitSheet
+import com.windrad.ui.collection.kpi.StromerzeugungSheet
+import com.windrad.ui.collection.kpi.formatGermanNumber
+import com.windrad.ui.collection.kpi.formatMetricValue
 import com.windrad.ui.components.InfoAlertDialog
 import com.windrad.ui.navigation.WindradDestination
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
-import kotlin.math.roundToInt
-
-// ── Bar chart constants ────────────────────────────────────────────────────────
-
-private const val MWH_BAR_COUNT = 11
-private const val CO2_BAR_COUNT = 12
-private const val CO2_METRIC_MAX = 1000.0
-
-private val mwhBarHeightFractions = listOf(
-    0.298f, 0.383f, 0.447f, 0.511f, 0.574f, 0.660f, 0.724f, 0.808f, 0.872f, 0.937f, 1.0f,
-)
-
-private val co2BarHeightFractions = listOf(
-    0.667f, 0.667f, 0.667f, 0.667f, 0.667f, 0.667f, 0.667f, 0.667f, 0.667f,
-    0.741f, 0.852f, 1.0f,
-)
-
-// ── Screen ────────────────────────────────────────────────────────────────────
 
 @Composable
 fun CollectionScreen(
@@ -73,6 +59,8 @@ fun CollectionScreen(
     modifier: Modifier = Modifier,
 ) {
     var showInfoDialog by remember { mutableStateOf(false) }
+    var showEnergySheet by remember { mutableStateOf(false) }
+    var showSustainabilitySheet by remember { mutableStateOf(false) }
     val isEmpty = uiState.collectedCount == 0
 
     Column(
@@ -204,7 +192,10 @@ fun CollectionScreen(
                                     value = uiState.mwhValue,
                                 )
                             },
-                            onClick = onMwhCardClicked,
+                            onClick = {
+                                onMwhCardClicked()
+                                showEnergySheet = true
+                            },
                         )
                         KpiMetricCard(
                             modifier = Modifier.weight(1f),
@@ -218,7 +209,10 @@ fun CollectionScreen(
                                     value = uiState.co2Value,
                                 )
                             },
-                            onClick = onCo2CardClicked,
+                            onClick = {
+                                onCo2CardClicked()
+                                showSustainabilitySheet = true
+                            },
                         )
                     }
 
@@ -279,6 +273,22 @@ fun CollectionScreen(
                 showInfoDialog = false
                 onFaqClicked()
             },
+        )
+    }
+
+    if (showEnergySheet) {
+        StromerzeugungSheet(
+            uiState = uiState,
+            onDismiss = { showEnergySheet = false },
+            onInfoClicked = { showInfoDialog = true },
+        )
+    }
+
+    if (showSustainabilitySheet) {
+        NachhaltigkeitSheet(
+            uiState = uiState,
+            onDismiss = { showSustainabilitySheet = false },
+            onInfoClicked = { showInfoDialog = true },
         )
     }
 }
@@ -363,76 +373,6 @@ private fun KpiMetricCard(
     }
 }
 
-// ── Bar charts ────────────────────────────────────────────────────────────────
-
-@Composable
-private fun MwhBarChart(value: Double, modifier: Modifier = Modifier) {
-    val fillColor = mwhBarColor(value)
-    val filledCount = mwhFilledBarCount(value)
-
-    androidx.compose.foundation.Canvas(modifier = modifier) {
-        val barWidth = 4.dp.toPx()
-        val totalSpan = size.width
-        val spacing = (totalSpan - barWidth * MWH_BAR_COUNT) / (MWH_BAR_COUNT - 1)
-        val bottom = size.height
-
-        mwhBarHeightFractions.forEachIndexed { i, fraction ->
-            val barColor = if (i < filledCount) fillColor else AppColors.Gray
-            val x = i * (barWidth + spacing) + barWidth / 2f
-            val top = bottom - size.height * fraction
-            drawLine(
-                color = barColor,
-                start = Offset(x, top),
-                end = Offset(x, bottom),
-                strokeWidth = barWidth,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round,
-            )
-        }
-    }
-}
-
-@Composable
-private fun Co2BarChart(value: Double, modifier: Modifier = Modifier) {
-    val indicatorBarIndex = co2IndicatorBarIndex(value)
-
-    androidx.compose.foundation.Canvas(modifier = modifier) {
-        val triangleAreaHeight = 10.dp.toPx()
-        val barsAreaHeight = size.height - triangleAreaHeight
-        val barWidth = 4.dp.toPx()
-        val totalSpan = size.width
-        val spacing = (totalSpan - barWidth * CO2_BAR_COUNT) / (CO2_BAR_COUNT - 1)
-        val bottom = size.height
-
-        // Draw triangle indicator above target bar
-        val targetX = indicatorBarIndex * (barWidth + spacing) + barWidth / 2f
-        val triSize = 6.dp.toPx()
-        val triTop = 0f
-        val triBottom = triangleAreaHeight
-        val triPath = Path().apply {
-            moveTo(targetX - triSize / 2f, triBottom)
-            lineTo(targetX + triSize / 2f, triBottom)
-            lineTo(targetX, triTop)
-            close()
-        }
-        drawPath(triPath, AppColors.Gray)
-
-        // Draw bars
-        co2BarHeightFractions.forEachIndexed { i, fraction ->
-            val barColor = co2BarColor(i)
-            val x = i * (barWidth + spacing) + barWidth / 2f
-            val barHeight = barsAreaHeight * fraction
-            val top = bottom - barHeight
-            drawLine(
-                color = barColor,
-                start = Offset(x, top),
-                end = Offset(x, bottom),
-                strokeWidth = barWidth,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round,
-            )
-        }
-    }
-}
-
 // ── Description text ──────────────────────────────────────────────────────────
 
 @Composable
@@ -461,45 +401,6 @@ private fun DescriptionText(isEmpty: Boolean, householdsCount: Int) {
         )
     }
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-private fun mwhBarColor(value: Double): Color = when {
-    value <= 0 -> AppColors.Gray
-    value < 50 -> AppColors.MetricRed
-    value < 500 -> AppColors.MetricOrange
-    value < 1000 -> AppColors.Yellow
-    else -> AppColors.Green
-}
-
-private fun mwhFilledBarCount(value: Double): Int {
-    if (value <= 0) return 0
-    return ((value / CO2_METRIC_MAX) * MWH_BAR_COUNT)
-        .roundToInt()
-        .coerceIn(0, MWH_BAR_COUNT)
-}
-
-private fun co2BarColor(index: Int): Color = when (index) {
-    0 -> AppColors.MetricRed
-    in 1..2 -> AppColors.MetricOrange
-    in 3..5 -> AppColors.Yellow
-    else -> AppColors.Co2Green
-}
-
-private fun co2IndicatorBarIndex(value: Double): Int {
-    if (value <= 0) return 0
-    return ((value / CO2_METRIC_MAX) * (CO2_BAR_COUNT - 1))
-        .roundToInt()
-        .coerceIn(0, CO2_BAR_COUNT - 1)
-}
-
-private fun formatGermanNumber(value: Double): String {
-    val rounded = value.roundToInt()
-    return rounded.toString().reversed().chunked(3).joinToString(".").reversed()
-}
-
-private fun formatMetricValue(value: Double): String =
-    if (value <= 0) "0" else formatGermanNumber(value)
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 
@@ -530,6 +431,10 @@ private fun CollectionScreenFilledPreview() {
                 householdsCount = CollectionViewModel.HOUSEHOLDS_PLACEHOLDER,
                 mwhValue = CollectionViewModel.MWH_PLACEHOLDER,
                 co2Value = CollectionViewModel.CO2_PLACEHOLDER,
+                coolingWaterValue = CollectionViewModel.COOLING_WATER_PLACEHOLDER,
+                ecoAreaValue = CollectionViewModel.ECO_AREA_PLACEHOLDER,
+                eCarChargesValue = CollectionViewModel.E_CAR_CHARGES_PLACEHOLDER,
+                fullLoadHoursValue = CollectionViewModel.FULL_LOAD_HOURS_PLACEHOLDER,
             ),
         )
     }

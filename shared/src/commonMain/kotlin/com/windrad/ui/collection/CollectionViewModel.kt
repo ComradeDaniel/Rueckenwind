@@ -33,6 +33,10 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                         householdsCount = HOUSEHOLDS_PLACEHOLDER,
                         mwhValue = MWH_PLACEHOLDER,
                         co2Value = CO2_PLACEHOLDER,
+                        coolingWaterValue = COOLING_WATER_PLACEHOLDER,
+                        ecoAreaValue = ECO_AREA_PLACEHOLDER,
+                        eCarChargesValue = E_CAR_CHARGES_PLACEHOLDER,
+                        fullLoadHoursValue = FULL_LOAD_HOURS_PLACEHOLDER,
                     )
                 } else {
                     it.copy(collectedCount = 0)
@@ -45,5 +49,9 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
         const val MWH_PLACEHOLDER = 1240.0
         const val CO2_PLACEHOLDER = 845.0
         const val HOUSEHOLDS_PLACEHOLDER = 4_000
+        const val COOLING_WATER_PLACEHOLDER = 2457.0
+        const val ECO_AREA_PLACEHOLDER = 423.0
+        const val E_CAR_CHARGES_PLACEHOLDER = 40000.0
+        const val FULL_LOAD_HOURS_PLACEHOLDER = 1920.0
     }
 }

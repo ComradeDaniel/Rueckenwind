@@ -13,6 +13,9 @@ object AppColors {
     val Co2Green = Color(0xFF1FA734)     // CO2 KPI card accent
     val MetricOrange = Color(0xFFFF9500) // MWh bar: 50–500 range
     val MetricRed = Color(0xFFFF3B30)    // MWh bar: 0–50 range
+    val MetricMint = Color(0xFF00C8B3)  // Battery indicator cells 3–4
+    val KpiRed = Color(0xFFFF383C)       // Windpark-Auslastung pill
+    val IndicatorBg = Color(0xFFF2F2F7)  // Icon/battery indicator background
 
     // UI Neutrals & Texts
     val DarkText = Color(0xFF1A1C1E)     // OnBackground / OnSurface / primary text
