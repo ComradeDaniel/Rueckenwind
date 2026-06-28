@@ -1,18 +1,18 @@
 package com.windrad.data
 
 import com.windrad.database.WindradDatabase
-import com.windrad.ui.map.WindmillDetails
-import com.windrad.ui.map.SearchSuggestion
 import com.windrad.ui.map.NearbyWindmill
+import com.windrad.ui.map.SearchSuggestion
+import com.windrad.ui.map.WindmillDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.time.Clock
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.math.roundToInt
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.math.roundToInt
+import kotlin.time.Clock
 
 /**
  * Repository für den Zugriff auf Windrad-Daten aus der SQLite-Datenbank.
@@ -82,132 +82,146 @@ class WindradRepository(private val db: WindradDatabase) {
      * Berechnet den Betriebsstatus (Aktiv/Inaktiv/Geplant) und das zugehörige
      * Datum relativ zum aktuellen Systemdatum.
      */
-    suspend fun loadWindmillDetails(id: String): WindmillDetails? = withContext(Dispatchers.Default) {
-        val row = db.windradDbQueries.selectWindmillById(id).executeAsOneOrNull() ?: return@withContext null
-        val displayName = row.unit_display_name ?: row.unit_MaStR_ID
-        
-        val (operatingStatus, commissioningDate) = calculatePeriodAndDate(
-            status = row.operating_status,
-            commissioningDateStr = row.unit_commissioning_date,
-            finalDecommissioningDateStr = row.final_decommissioning_date,
-            plannedCommissioningDateStr = row.planned_commissioning_date
-        )
-        
-        val householdsText = calculateHouseholdsFedText(
-            netCapacity = row.unit_net_nominal_capacity,
-            onshoreOffshoreType = row.onshore_offshore_type
-        )
-        
-        val rotorText = calculateRotorComparisonText(
-            diameter = row.turbine_rotor_diameter
-        )
-        
-        val isOnshore = row.onshore_offshore_type != "Windkraft auf See"
-        val locationText = calculateLocationText(row.onshore_offshore_type)
+    suspend fun loadWindmillDetails(id: String): WindmillDetails? =
+        withContext(Dispatchers.Default) {
+            val row = db.windradDbQueries.selectWindmillById(id).executeAsOneOrNull()
+                ?: return@withContext null
+            val displayName = row.unit_display_name ?: row.unit_MaStR_ID
+
+            val (operatingStatus, commissioningDate) = calculatePeriodAndDate(
+                status = row.operating_status,
+                commissioningDateStr = row.unit_commissioning_date,
+                finalDecommissioningDateStr = row.final_decommissioning_date,
+                plannedCommissioningDateStr = row.planned_commissioning_date
+            )
+
+            val householdsText = calculateHouseholdsFedText(
+                netCapacity = row.unit_net_nominal_capacity,
+                onshoreOffshoreType = row.onshore_offshore_type
+            )
+
+            val rotorText = calculateRotorComparisonText(
+                diameter = row.turbine_rotor_diameter
+            )
+
+            val isOnshore = row.onshore_offshore_type != "Windkraft auf See"
+            val locationText = calculateLocationText(row.onshore_offshore_type)
         val totalHeight = (row.turbine_hub_height ?: 0.0) + (row.turbine_rotor_diameter ?: 0.0) / 2.0
-        
-        WindmillDetails(
-            name = displayName,
-            windparkName = row.wind_plant_name,
+
+            WindmillDetails(
+                name = displayName,
+                windparkName = row.wind_plant_name,
             operatingStatus = operatingStatus,
-            commissioningDate = commissioningDate,
-            householdsFedText = householdsText,
-            rotorComparisonText = rotorText,
-            technologyText = row.power_generation_technology ?: "Horizontalläufer",
+                commissioningDate = commissioningDate,
+                householdsFedText = householdsText,
+                rotorComparisonText = rotorText,
+                technologyText = row.power_generation_technology ?: "Horizontalläufer",
             locationText = locationText,
-            isOnshore = isOnshore,
+                isOnshore = isOnshore,
             totalHeight = totalHeight,
             latitude = row.latitude_wgs84 ?: 0.0,
             longitude = row.longitude_wgs84 ?: 0.0,
             rotorDiameter = row.turbine_rotor_diameter
-        )
-    }
+            )
+        }
 
     /**
      * Sucht nach Orten, Windparks und Postleitzahlen in der Datenbank.
      */
-    suspend fun searchLocations(query: String): List<SearchSuggestion> = withContext(Dispatchers.Default) {
-        if (query.isBlank()) return@withContext emptyList()
-        val matchQuery = "%$query%"
-        db.windradDbQueries.searchLocations(matchQuery).executeAsList().map { row ->
-            SearchSuggestion(
-                type = row.type,
-                name = row.name ?: "",
-                latitude = row.latitude ?: 0.0,
-                longitude = row.longitude ?: 0.0
-            )
+    suspend fun searchLocations(query: String): List<SearchSuggestion> =
+        withContext(Dispatchers.Default) {
+            if (query.isBlank()) return@withContext emptyList()
+            val matchQuery = "%$query%"
+            db.windradDbQueries.searchLocations(matchQuery).executeAsList().map { row ->
+                SearchSuggestion(
+                    type = row.type,
+                    name = row.name ?: "",
+                    latitude = row.latitude ?: 0.0,
+                    longitude = row.longitude ?: 0.0
+                )
+            }
         }
-    }
 
     private val jsonParser = Json { ignoreUnknownKeys = true }
 
     /**
      * Sucht online nach Orten über die Nominatim API (OpenStreetMap).
      */
-    suspend fun searchOnlinePlaces(query: String): List<SearchSuggestion> = withContext(Dispatchers.Default) {
-        if (query.isBlank()) return@withContext emptyList()
-        val encodedQuery = urlEncode(query)
-        val url = "https://nominatim.openstreetmap.org/search?q=$encodedQuery&format=json&limit=5&addressdetails=1"
-        val response = HttpUtil.get(url) ?: return@withContext emptyList()
-        try {
-            val results = jsonParser.decodeFromString<List<NominatimResult>>(response)
-            results.mapNotNull { res ->
-                val lat = res.lat.toDoubleOrNull() ?: return@mapNotNull null
-                val lon = res.lon.toDoubleOrNull() ?: return@mapNotNull null
-                
-                val parts = res.display_name.split(",")
-                val name = parts.firstOrNull()?.trim() ?: res.display_name
-                val subtitle = parts.drop(1).joinToString(",").trim()
-                
-                SearchSuggestion(
-                    type = "city",
-                    name = name,
-                    latitude = lat,
-                    longitude = lon,
-                    subtitle = subtitle.ifEmpty { "Ort" }
-                )
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-    }
+    suspend fun searchOnlinePlaces(query: String): List<SearchSuggestion> =
+        withContext(Dispatchers.Default) {
+            if (query.isBlank()) return@withContext emptyList()
+            val encodedQuery = urlEncode(query)
+            val url =
+                "https://nominatim.openstreetmap.org/search?q=$encodedQuery&format=json&limit=5&addressdetails=1"
+            val response = HttpUtil.get(url) ?: return@withContext emptyList()
+            try {
+                val results = jsonParser.decodeFromString<List<NominatimResult>>(response)
+                results.mapNotNull { res ->
+                    val lat = res.lat.toDoubleOrNull() ?: return@mapNotNull null
+                    val lon = res.lon.toDoubleOrNull() ?: return@mapNotNull null
 
-    suspend fun findWindmillsWithinRadius(lat: Double, lon: Double, radiusKm: Double): List<NearbyWindmill> = withContext(Dispatchers.Default) {
+                    val parts = res.display_name.split(",")
+                    val name = parts.firstOrNull()?.trim() ?: res.display_name
+                    val subtitle = parts.drop(1).joinToString(",").trim()
+
+                    SearchSuggestion(
+                        type = "city",
+                        name = name,
+                        latitude = lat,
+                        longitude = lon,
+                        subtitle = subtitle.ifEmpty { "Ort" }
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
+            }
+        }
+
+    suspend fun findWindmillsWithinRadius(
+        lat: Double,
+        lon: Double,
+        radiusKm: Double
+    ): List<NearbyWindmill> = withContext(Dispatchers.Default) {
         val latDiff = radiusKm / 111.0
         val lonDiff = radiusKm / (111.0 * kotlin.math.cos(lat * kotlin.math.PI / 180.0))
-        
+
         val minLat = lat - latDiff
         val maxLat = lat + latDiff
         val minLon = lon - lonDiff
         val maxLon = lon + lonDiff
-        
+
         val rows = db.windradDbQueries.selectWindmillsInBoundingBox(
             minLat = minLat,
             maxLat = maxLat,
             minLon = minLon,
             maxLon = maxLon
         ).executeAsList()
-        
+
         rows.mapNotNull { row ->
             val wLat = row.latitude_wgs84 ?: return@mapNotNull null
             val wLon = row.longitude_wgs84 ?: return@mapNotNull null
             val distance = calculateDistanceKm(lat, lon, wLat, wLon)
             if (distance <= radiusKm) {
                 val displayName = row.unit_display_name ?: row.unit_MaStR_ID
-                
+
                 val statusText = when {
-                    row.operating_status?.contains("Planung", ignoreCase = true) == true -> "In Planung"
+                    row.operating_status?.contains(
+                        "Planung",
+                        ignoreCase = true
+                    ) == true -> "In Planung"
+
                     row.operating_status?.contains("Betrieb", ignoreCase = true) == true -> "Aktiv"
                     else -> "Inaktiv"
                 }
-                
-                val capacityText = if (row.unit_net_nominal_capacity != null && row.unit_net_nominal_capacity > 0.0) {
-                    formatCapacity(row.unit_net_nominal_capacity)
-                } else {
-                    "Leistung unbekannt"
-                }
-                
+
+                val capacityText =
+                    if (row.unit_net_nominal_capacity != null && row.unit_net_nominal_capacity > 0.0) {
+                        formatCapacity(row.unit_net_nominal_capacity)
+                    } else {
+                        "Leistung unbekannt"
+                    }
+
                 NearbyWindmill(
                     id = row.unit_MaStR_ID,
                     name = displayName,
@@ -232,8 +246,14 @@ class WindradRepository(private val db: WindradDatabase) {
         }
     }
 
-    suspend fun updateCollectionStatus(id: String, collected: Boolean) = withContext(Dispatchers.Default) {
-        db.windradDbQueries.updateCollectionStatus(id, collected)
+    suspend fun updateCollectionStatus(id: String, collected: Boolean) =
+        withContext(Dispatchers.Default) {
+            db.windradDbQueries.updateCollectionStatus(id, collected)
+        }
+
+    suspend fun getCollectedCount(): Int = withContext(Dispatchers.Default) {
+        val row = db.windradDbQueries.countTotalCollected().executeAsOne()
+        row.collected_count?.toInt() ?: 0
     }
 
     private fun formatCapacity(capacity: Double): String {
@@ -248,7 +268,12 @@ class WindradRepository(private val db: WindradDatabase) {
         }
     }
 
-    private fun calculateDistanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    private fun calculateDistanceKm(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double
+    ): Double {
         val r = 6371.0 // Earth radius in km
         val dLat = (lat2 - lat1) * kotlin.math.PI / 180.0
         val dLon = (lon2 - lon1) * kotlin.math.PI / 180.0
@@ -269,8 +294,6 @@ class WindradRepository(private val db: WindradDatabase) {
             "$formatted km entfernt"
         }
     }
-
-
 
 
     /**
@@ -322,7 +345,7 @@ internal fun calculatePeriodAndDate(
     val isPlanned = statusClean.equals("In Planung", ignoreCase = true)
     val isActive = statusClean.equals("In Betrieb", ignoreCase = true)
     val isInactive = statusClean.equals("Endgültig stillgelegt", ignoreCase = true) ||
-                     statusClean.equals("Vorübergehend stillgelegt", ignoreCase = true)
+            statusClean.equals("Vorübergehend stillgelegt", ignoreCase = true)
 
     val sourceDateStr = when {
         isPlanned -> plannedCommissioningDateStr

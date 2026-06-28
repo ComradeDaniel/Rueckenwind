@@ -3,14 +3,20 @@ package org.example.project
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
-import com.windrad.database.DatabaseDriverFactory
 import com.windrad.data.rememberLocationPermissionRequester
+import com.windrad.database.DatabaseDriverFactory
 import com.windrad.ui.collection.CollectionScreen
+import com.windrad.ui.collection.CollectionViewModel
 import com.windrad.ui.faq.FaqScreen
 import com.windrad.ui.map.MapScreen
 import com.windrad.ui.map.MapViewModel
@@ -24,6 +30,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
         var currentDestination by remember { mutableStateOf(WindradDestination.MAP) }
         val mapViewModel = remember { MapViewModel(driverFactory) }
         val mapUiState by mapViewModel.uiState.collectAsState()
+        val collectionViewModel = remember { CollectionViewModel(driverFactory) }
+        val collectionUiState by collectionViewModel.uiState.collectAsState()
 
         // Android: request location permission before running the scan.
         // iOS: no-op (keeps existing behavior unchanged).
@@ -59,24 +67,17 @@ fun App(driverFactory: DatabaseDriverFactory) {
                 )
             }
 
-            Box(
-                modifier = if (currentDestination == WindradDestination.COLLECTION) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier.size(0.dp)
+                WindradDestination.COLLECTION -> {
+                    CollectionScreen(
+                        uiState = collectionUiState,
+                        onFaqClicked = { currentDestination = WindradDestination.FAQ },
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
-            ) {
-                CollectionScreen(modifier = Modifier.fillMaxSize())
-            }
 
-            Box(
-                modifier = if (currentDestination == WindradDestination.FAQ) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier.size(0.dp)
+                WindradDestination.FAQ -> {
+                    FaqScreen(modifier = Modifier.fillMaxSize())
                 }
-            ) {
-                FaqScreen(modifier = Modifier.fillMaxSize())
             }
 
             // Floating Bottom Navigation Bar (only visible on non-map screens)
