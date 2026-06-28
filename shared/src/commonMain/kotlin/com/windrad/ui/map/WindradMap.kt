@@ -11,7 +11,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
+import org.jetbrains.compose.resources.painterResource
+import windrad.shared.generated.resources.*
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -87,11 +90,13 @@ fun WindradMap(
         onZoomChanged(cameraState.position.zoom)
     }
 
+    val turbinePainter = painterResource(Res.drawable.wind_turbine_icon_white)
+
     // WindradPin-Varianten als Painter-Objekte für die MapLibre-Sprite-Registrierung.
-    val pinBlue = remember { WindradPinPainter(AppColors.MapsBlue) }
-    val pinGreen = remember { WindradPinPainter(AppColors.Green) }
-    val pinYellow = remember { WindradPinPainter(AppColors.Yellow) }
-    val pinGray = remember { WindradPinPainter(AppColors.Gray) }
+    val pinBlue = remember(turbinePainter) { WindradPinPainter(AppColors.MapsBlue, turbinePainter) }
+    val pinGreen = remember(turbinePainter) { WindradPinPainter(AppColors.Green, turbinePainter) }
+    val pinYellow = remember(turbinePainter) { WindradPinPainter(AppColors.Yellow, turbinePainter) }
+    val pinGray = remember(turbinePainter) { WindradPinPainter(AppColors.Gray, turbinePainter) }
 
     if (windmillGeoJson == null) {
         androidx.compose.foundation.layout.Box(
@@ -269,7 +274,7 @@ fun WindradMap(
  *
  * @param isCollected true = grüner Pin (gesammelt), false = blauer Pin (noch nicht gesammelt)
  */
-class WindradPinPainter(val pinColor: Color) : Painter() {
+class WindradPinPainter(val pinColor: Color, val turbinePainter: Painter) : Painter() {
 
     // Intrinsische Größe des Pins in Pixeln (wird durch die DpSize in image() überschrieben)
     override val intrinsicSize = Size(38f, 41f)
@@ -311,23 +316,19 @@ class WindradPinPainter(val pinColor: Color) : Painter() {
             center = Offset(centerX, centerY)
         )
 
-        // ── Windrad-Icon (Rotor-Symbol in Weiß) ──────────────────────────────
-        val rotorCy = centerY - 2.dp.toPx()
-        val dotRadius = 1.1.dp.toPx()
-        val stroke = dotRadius * 2.3f
-        val gap = dotRadius
-        val bladeLen = dotRadius * 4.2f
-        val poleLen = dotRadius * 8f
+        // ── Windrad-Icon (SVG Turbine in Weiß) ──────────────────────────────
+        val hTarget = 18.dp.toPx()
+        val wTarget = hTarget * (24f / 35f)
+        val targetCx = centerX
+        val targetCy = centerY - 1.dp.toPx()
 
-        drawWindmill(
-            centerX = centerX,
-            centerY = rotorCy,
-            bladeLength = bladeLen,
-            mastLength = poleLen,
-            strokeWidth = stroke,
-            color = Color.White,
-            gap = gap,
-            hubRadius = dotRadius
-        )
+        val left = targetCx - wTarget * (12.0391f / 24f)
+        val top = targetCy - hTarget * (13.125f / 35f)
+
+        translate(left = left, top = top) {
+            with(turbinePainter) {
+                draw(size = Size(wTarget, hTarget))
+            }
+        }
     }
 }

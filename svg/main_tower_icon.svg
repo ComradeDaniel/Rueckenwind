@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 31.6748 41.3998" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Main Tower Icon">
+<path id="Unten" d="M0.5 40.8998H31.1748" stroke="var(--stroke-0, #1E1E1E)" stroke-linecap="round"/>
+<path id="Mitte" d="M15.5 40.5V11.5C15.5 10.9477 15.0523 10.5 14.5 10.5C13.9477 10.5 13.5 10.9477 13.5 11.5V40.5" stroke="var(--stroke-0, #1E1E1E)"/>
+<g id="Links">
+<path id="Vector" d="M13.5 40.5001V13.5001C13.5 12.9478 13.0523 12.5001 12.5 12.5001H6.49997C5.94768 12.5001 5.49997 12.9478 5.49997 13.5001V40.5001" stroke="var(--stroke-0, #1E1E1E)"/>
+<path id="Vector_2" d="M8.20876 15.861V37.77" stroke="var(--stroke-0, #1E1E1E)" stroke-dasharray="1 3"/>
+<path id="Vector_3" d="M11.2763 15.861V37.77" stroke="var(--stroke-0, #1E1E1E)" stroke-dasharray="1 3"/>
+</g>
+<g id="Rechts">
+<path id="Vector_4" d="M25.0399 40.8998V8.6687C25.0399 8.11642 24.5921 7.6687 24.0399 7.6687H16.8374C16.2851 7.6687 15.8374 8.11642 15.8374 8.6687V40.8998" stroke="var(--stroke-0, #1E1E1E)"/>
+<path id="Vector_5" d="M20.4386 7.6687V0" stroke="var(--stroke-0, #1E1E1E)"/>
+<path id="Vector_6" d="M20.4386 11.2475V38.3435" stroke="var(--stroke-0, #1E1E1E)" stroke-dasharray="1 4"/>
+</g>
+</g>
+</svg>

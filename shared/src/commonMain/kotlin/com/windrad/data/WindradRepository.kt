@@ -104,6 +104,7 @@ class WindradRepository(private val db: WindradDatabase) {
         
         val isOnshore = row.onshore_offshore_type != "Windkraft auf See"
         val locationText = calculateLocationText(row.onshore_offshore_type)
+        val totalHeight = (row.turbine_hub_height ?: 0.0) + (row.turbine_rotor_diameter ?: 0.0) / 2.0
         
         WindmillDetails(
             name = displayName,
@@ -111,8 +112,10 @@ class WindradRepository(private val db: WindradDatabase) {
             commissioningDate = commissioningDate,
             householdsFedText = householdsText,
             rotorComparisonText = rotorText,
+            technologyText = row.power_generation_technology ?: "Horizontalläufer",
             locationText = locationText,
-            isOnshore = isOnshore
+            isOnshore = isOnshore,
+            totalHeight = totalHeight
         )
     }
 

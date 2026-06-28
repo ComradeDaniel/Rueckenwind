@@ -87,6 +87,9 @@ import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import windrad.shared.generated.resources.Res
+import org.jetbrains.compose.resources.painterResource
+import windrad.shared.generated.resources.wind_turbine_icon
+
 
 @Composable
 fun MapScreen(
@@ -763,9 +766,10 @@ fun MapScreen(
                                                 modifier = Modifier.size(24.dp, 35.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                WindTurbineIcon(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    color = Color(0xFF1E1E1E)
+                                                Image(
+                                                    painter = painterResource(Res.drawable.wind_turbine_icon),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.fillMaxSize()
                                                 )
                                             }
                                             Spacer(modifier = Modifier.width(16.dp))

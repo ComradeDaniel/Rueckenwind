@@ -1,9 +1,13 @@
 package com.windrad.ui.map
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import com.windrad.util.SightFinder
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
+import org.jetbrains.compose.resources.painterResource
+import windrad.shared.generated.resources.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +39,8 @@ data class WindmillDetails(
     val rotorComparisonText: String = "126m ~ 1,7 Fußballfelder",
     val technologyText: String = "Horizontalläufer",
     val locationText: String = "An Land",
-    val isOnshore: Boolean = true
+    val isOnshore: Boolean = true,
+    val totalHeight: Double = 166.0
 )
 
 /**
@@ -114,6 +119,14 @@ fun WindmillDetailsCard(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val sight = SightFinder.findNearestSight(details.totalHeight)
+                    val heightText = "${details.totalHeight.toInt()}m ~ ${sight.name}"
+                    val isVertical = details.technologyText == "Vertikalläufer"
+                    val turbineIconRes = if (isVertical) {
+                        Res.drawable.vertikallaeufer_icon
+                    } else {
+                        Res.drawable.wind_turbine_icon
+                    }
                     Box(
                         modifier = Modifier.size(56.dp, 68.dp),
                         contentAlignment = Alignment.Center
@@ -122,13 +135,21 @@ fun WindmillDetailsCard(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            WindTurbineIcon(modifier = Modifier.size(18.dp, 36.dp))
-                            KölnerDomIcon(modifier = Modifier.size(24.dp, 32.dp))
+                            Image(
+                                painter = painterResource(turbineIconRes),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp, 36.dp)
+                            )
+                            Image(
+                                painter = painterResource(sight.icon),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp, 32.dp)
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = details.heightComparisonText,
+                        text = heightText,
                         color = AppColors.DarkText,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Normal,
@@ -150,8 +171,22 @@ fun WindmillDetailsCard(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            WindTurbineRotorIcon(modifier = Modifier.size(22.dp, 36.dp))
-                            SoccerFieldIcon(modifier = Modifier.size(26.dp, 20.dp))
+                            val isVertical = details.technologyText == "Vertikalläufer"
+                            val rotorIconRes = if (isVertical) {
+                                Res.drawable.vertikallaeufer_icon_rotordurchmesser
+                            } else {
+                                Res.drawable.wind_turbine_rotor_diameter
+                            }
+                            Image(
+                                painter = painterResource(rotorIconRes),
+                                contentDescription = null,
+                                modifier = Modifier.size(22.dp, 36.dp)
+                            )
+                            Image(
+                                painter = painterResource(Res.drawable.fussballfeld_icon),
+                                contentDescription = null,
+                                modifier = Modifier.size(26.dp, 20.dp)
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -195,7 +230,17 @@ fun WindmillDetailsCard(
                         modifier = Modifier.size(48.dp, 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        WindTurbineHorizontalIcon(modifier = Modifier.size(32.dp))
+                        val isVertical = details.technologyText == "Vertikalläufer"
+                        val techIconRes = if (isVertical) {
+                            Res.drawable.vertikallaeufer_icon_vertikal
+                        } else {
+                            Res.drawable.wind_turbine_horizontal
+                        }
+                        Image(
+                            painter = painterResource(techIconRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -215,7 +260,18 @@ fun WindmillDetailsCard(
                         modifier = Modifier.size(48.dp, 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        WindTurbineLocationIcon(isOnshore = details.isOnshore, modifier = Modifier.size(24.dp, 36.dp))
+                        val isVertical = details.technologyText == "Vertikalläufer"
+                        val iconRes = when {
+                            details.isOnshore && isVertical -> Res.drawable.vertikallaeufer_onshore
+                            details.isOnshore && !isVertical -> Res.drawable.wind_turbine_onshore_icon
+                            !details.isOnshore && isVertical -> Res.drawable.vertikallaeufer_offshore
+                            else -> Res.drawable.wind_turbine_offshore_icon
+                        }
+                        Image(
+                            painter = painterResource(iconRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp, 36.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -256,209 +312,6 @@ fun LightningIcon(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun WindTurbineIcon(
-    modifier: Modifier = Modifier,
-    color: Color = AppColors.SubtitleText
-) {
-    Canvas(modifier = modifier) {
-        val strokeWidth = 3.5.dp.toPx()
-        val centerX = size.width / 2f
-        val centerY = size.height * 0.35f
-        val hubRadius = strokeWidth / 2f
-        val gap = hubRadius
-        
-        drawWindmill(
-            centerX = centerX,
-            centerY = centerY,
-            bladeLength = size.height * 0.30f,
-            mastLength = size.height - centerY - hubRadius - gap,
-            strokeWidth = strokeWidth,
-            color = color,
-            gap = gap,
-            hubRadius = hubRadius
-        )
-    }
-}
 
-@Composable
-fun WindTurbineRotorIcon(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val color = AppColors.SubtitleText
-        val strokeWidth = 3.5.dp.toPx()
-        val centerX = size.width / 2f
-        val centerY = size.height * 0.35f
-        val hubRadius = strokeWidth / 2f
-        val gap = hubRadius
-        val bladeLength = size.height * 0.30f
-        
-        // Shaded rotor disk area in the background
-        drawCircle(
-            color = color.copy(alpha = 0.08f),
-            radius = hubRadius + gap + bladeLength,
-            center = Offset(centerX, centerY)
-        )
-        
-        drawWindmill(
-            centerX = centerX,
-            centerY = centerY,
-            bladeLength = bladeLength,
-            mastLength = size.height - centerY - hubRadius - gap,
-            strokeWidth = strokeWidth,
-            color = color,
-            gap = gap,
-            hubRadius = hubRadius
-        )
-    }
-}
 
-@Composable
-fun KölnerDomIcon(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val color = AppColors.SubtitleText
-        val strokeWidth = 1.5.dp.toPx()
-        
-        val leftTowerX = size.width * 0.3f
-        val rightTowerX = size.width * 0.7f
-        val spireY = size.height * 0.08f
-        val bottomY = size.height * 0.92f
-        
-        val path = Path().apply {
-            // Left Spire Tower
-            moveTo(leftTowerX, spireY)
-            lineTo(size.width * 0.12f, bottomY)
-            lineTo(size.width * 0.48f, bottomY)
-            close()
-            
-            // Right Spire Tower
-            moveTo(rightTowerX, spireY)
-            lineTo(size.width * 0.52f, bottomY)
-            lineTo(size.width * 0.88f, bottomY)
-            close()
-            
-            // Center Gable/Portal
-            moveTo(size.width * 0.44f, bottomY)
-            lineTo(size.width * 0.5f, size.height * 0.55f)
-            lineTo(size.width * 0.56f, bottomY)
-        }
-        drawPath(path = path, color = color, style = Stroke(width = strokeWidth))
-    }
-}
 
-@Composable
-fun SoccerFieldIcon(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val color = AppColors.SubtitleText
-        val strokeWidth = 1.5.dp.toPx()
-        
-        // Pitch border
-        drawRect(color = color, style = Stroke(width = strokeWidth))
-        
-        // Midfield Line
-        drawLine(
-            color = color,
-            start = Offset(size.width / 2f, 0f),
-            end = Offset(size.width / 2f, size.height),
-            strokeWidth = strokeWidth
-        )
-        
-        // Midfield Circle
-        drawCircle(
-            color = color,
-            radius = size.height * 0.25f,
-            center = Offset(size.width / 2f, size.height / 2f),
-            style = Stroke(width = strokeWidth)
-        )
-        
-        // Left Goal Box
-        drawRect(
-            color = color,
-            topLeft = Offset(0f, size.height * 0.28f),
-            size = Size(size.width * 0.18f, size.height * 0.44f),
-            style = Stroke(width = strokeWidth)
-        )
-        
-        // Right Goal Box
-        drawRect(
-            color = color,
-            topLeft = Offset(size.width * 0.82f, size.height * 0.28f),
-            size = Size(size.width * 0.18f, size.height * 0.44f),
-            style = Stroke(width = strokeWidth)
-        )
-    }
-}
-
-@Composable
-fun WindTurbineHorizontalIcon(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val color = AppColors.SubtitleText
-        val blue = AppColors.Blue
-        val strokeWidth = 1.5.dp.toPx()
-        val centerX = size.width / 2f
-        val centerY = size.height / 2f
-        
-        // Blue circle representing rotation direction
-        drawCircle(
-            color = blue,
-            radius = size.minDimension / 2f - 3.dp.toPx(),
-            style = Stroke(width = strokeWidth)
-        )
-        
-        // Rotor Hub
-        drawCircle(color = color, radius = 2.dp.toPx(), center = Offset(centerX, centerY))
-        
-        // Three Rotor Blades
-        for (angle in listOf(0f, 120f, 240f)) {
-            val rad = angle * (PI.toFloat() / 180f)
-            val length = (size.minDimension / 2f) * 0.72f
-            val endX = centerX + length * sin(rad)
-            val endY = centerY - length * cos(rad)
-            drawLine(
-                color = color,
-                start = Offset(centerX, centerY),
-                end = Offset(endX, endY),
-                strokeWidth = strokeWidth,
-                cap = StrokeCap.Round
-            )
-        }
-    }
-}
-
-@Composable
-fun WindTurbineLocationIcon(isOnshore: Boolean, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val color = AppColors.SubtitleText
-        val strokeWidth = 3.5.dp.toPx()
-        val centerX = size.width / 2f
-        val centerY = size.height * 0.35f
-        val hubRadius = strokeWidth / 2f
-        val gap = hubRadius
-        
-        // Ground mound curve or water waves at the bottom
-        val groundY = size.height - 4.dp.toPx()
-        val path = Path().apply {
-            if (isOnshore) {
-                moveTo(0f, size.height)
-                quadraticTo(centerX, groundY, size.width, size.height)
-            } else {
-                moveTo(0f, groundY)
-                quadraticTo(size.width * 0.125f, groundY - 3.dp.toPx(), size.width * 0.25f, groundY)
-                quadraticTo(size.width * 0.375f, groundY + 3.dp.toPx(), size.width * 0.5f, groundY)
-                quadraticTo(size.width * 0.625f, groundY - 3.dp.toPx(), size.width * 0.75f, groundY)
-                quadraticTo(size.width * 0.875f, groundY + 3.dp.toPx(), size.width, groundY)
-            }
-        }
-        drawPath(path = path, color = color, style = Stroke(width = strokeWidth * 1.5f))
-        
-        drawWindmill(
-            centerX = centerX,
-            centerY = centerY,
-            bladeLength = size.height * 0.3f,
-            mastLength = groundY - centerY - hubRadius - gap,
-            strokeWidth = strokeWidth,
-            color = color,
-            gap = gap,
-            hubRadius = hubRadius
-        )
-    }
-}

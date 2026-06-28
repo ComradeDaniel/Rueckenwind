@@ -15,9 +15,9 @@ fun CollectionScreen(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Text(
@@ -25,18 +25,18 @@ fun CollectionScreen(modifier: Modifier = Modifier) {
                 fontSize = 48.sp
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
+                        Text(
                 text = "Sammlung",
                 fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
-            )
+                        )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
+                        Text(
                 text = "Deine gescannten Windparks erscheinen hier.",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
-        }
-    }
-}
+                        )
+                    }
+                }
+            }
