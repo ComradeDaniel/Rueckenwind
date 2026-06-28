@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import com.windrad.database.DatabaseDriverFactory
+import com.windrad.data.rememberLocationPermissionRequester
 import com.windrad.ui.collection.CollectionScreen
 import com.windrad.ui.faq.FaqScreen
 import com.windrad.ui.map.MapScreen
@@ -23,13 +24,23 @@ fun App(driverFactory: DatabaseDriverFactory) {
         val mapViewModel = remember { MapViewModel(driverFactory) }
         val mapUiState by mapViewModel.uiState.collectAsState()
 
+        // Android: request location permission before running the scan.
+        // iOS: no-op (keeps existing behavior unchanged).
+        val requestLocationPermissionThenScan = rememberLocationPermissionRequester { granted ->
+            if (granted) {
+                mapViewModel.onScanClicked()
+            } else {
+                // Permission denied: keep behavior safe by doing nothing.
+            }
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             // Screen Content
             when (currentDestination) {
                 WindradDestination.MAP -> {
                     MapScreen(
                         uiState = mapUiState,
-                        onScanClicked = { mapViewModel.onScanClicked() },
+                        onScanClicked = { requestLocationPermissionThenScan() },
                         onWindmillSelected = { mapViewModel.selectWindmill(it) },
                         onSearchQueryChanged = { mapViewModel.onSearchQueryChanged(it) },
                         onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
@@ -41,9 +52,11 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+
                 WindradDestination.COLLECTION -> {
                     CollectionScreen(modifier = Modifier.fillMaxSize())
                 }
+
                 WindradDestination.FAQ -> {
                     FaqScreen(modifier = Modifier.fillMaxSize())
                 }

@@ -1,37 +1,66 @@
 package com.windrad.ui.map
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.StartOffset
-import androidx.compose.ui.unit.Dp
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
@@ -40,28 +69,23 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.windrad.ui.navigation.WindradBottomBar
 import com.windrad.ui.navigation.WindradDestination
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import com.windrad.ui.theme.AppColors
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.Image
 import io.github.alexzhirkevich.compottie.LottieCompositionSpec
-import io.github.alexzhirkevich.compottie.rememberLottieComposition
 import io.github.alexzhirkevich.compottie.animateLottieCompositionAsState
+import io.github.alexzhirkevich.compottie.rememberLottieComposition
 import io.github.alexzhirkevich.compottie.rememberLottiePainter
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import windrad.shared.generated.resources.Res
 
 @Composable
@@ -79,30 +103,36 @@ fun MapScreen(
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    
+
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val screenHeight = maxHeight
         val screenWidth = maxWidth
         val density = LocalDensity.current
-        
+
         // Define bottom sheet heights and offsets
         val collapsedHeight = 166.dp
         val maxExpandedHeight = screenHeight - 100.dp
-        
+
         val collapsedOffsetPx = with(density) { (screenHeight - collapsedHeight).toPx() }
         val maxExpandedOffsetPx = with(density) { 100.dp.toPx() }
-        
+
         var detailsCardHeightDp by remember { mutableStateOf(300.dp) }
         val contentHeight = (detailsCardHeightDp + 193.dp).coerceAtMost(screenHeight - 100.dp)
         val contentOffsetPx = with(density) { (screenHeight - contentHeight).toPx() }
-        
+
         // Draggable sheet offset state
         var sheetState by remember { mutableStateOf(SheetState.COLLAPSED) }
         var isDragging by remember { mutableStateOf(false) }
         val sheetOffsetY = remember { Animatable(collapsedOffsetPx) }
-        
+
         // Calculate progress specifically from contentOffsetPx (HALF_EXPANDED) to maxExpandedOffsetPx (FULLY_EXPANDED)
-        val fullyExpandedProgress = remember(contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value, sheetState, isDragging) {
+        val fullyExpandedProgress = remember(
+            contentOffsetPx,
+            maxExpandedOffsetPx,
+            sheetOffsetY.value,
+            sheetState,
+            isDragging
+        ) {
             if (sheetState == SheetState.FULLY_EXPANDED || (isDragging && sheetOffsetY.value < contentOffsetPx)) {
                 val range = contentOffsetPx - maxExpandedOffsetPx
                 if (range > 0f) {
@@ -114,7 +144,7 @@ fun MapScreen(
                 0f
             }
         }
-        
+
         // Load Lottie File
         var lottieJsonString by remember { mutableStateOf<String?>(null) }
         LaunchedEffect(Unit) {
@@ -124,31 +154,33 @@ fun MapScreen(
                 println("Failed to load Lottie resource: $e")
             }
         }
-        
+
         val compositionSpec = if (lottieJsonString != null) {
             LottieCompositionSpec.JsonString(lottieJsonString!!)
         } else {
             LottieCompositionSpec.JsonString("")
         }
-        
+
         val composition by rememberLottieComposition(compositionSpec)
-        
+
         val lottieProgress by animateLottieCompositionAsState(
             composition = composition,
             iterations = Int.MAX_VALUE
         )
 
         // Calculate expansion progress (0f = collapsed, 1f = fully expanded)
-        val progress = remember(collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value) {
-            val targetOffset = if (uiState.selectedWindmill != null) contentOffsetPx else maxExpandedOffsetPx
-            val range = collapsedOffsetPx - targetOffset
-            if (range > 0f) {
-                ((collapsedOffsetPx - sheetOffsetY.value) / range).coerceIn(0f, 1f)
-            } else {
-                0f
+        val progress =
+            remember(collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value) {
+                val targetOffset =
+                    if (uiState.selectedWindmill != null) contentOffsetPx else maxExpandedOffsetPx
+                val range = collapsedOffsetPx - targetOffset
+                if (range > 0f) {
+                    ((collapsedOffsetPx - sheetOffsetY.value) / range).coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
             }
-        }
-        
+
         // Sync offset when state or constraints change
         LaunchedEffect(sheetState, collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx) {
             val target = when (sheetState) {
@@ -158,7 +190,6 @@ fun MapScreen(
             }
             sheetOffsetY.animateTo(target, animationSpec = tween(300))
         }
-
 
 
         // 1. Map Background
@@ -206,9 +237,9 @@ fun MapScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    
+
                     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-                    
+
                     BasicTextField(
                         value = uiState.searchQuery,
                         onValueChange = onSearchQueryChanged,
@@ -230,7 +261,10 @@ fun MapScreen(
                             }
                         ),
                         decorationBox = { innerTextField ->
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
                                 if (uiState.searchQuery.isEmpty()) {
                                     Text(
                                         text = "Suchen",
@@ -242,7 +276,7 @@ fun MapScreen(
                             }
                         }
                     )
-                    
+
                     if (uiState.searchQuery.isNotEmpty()) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -329,7 +363,7 @@ fun MapScreen(
 
         // 3. Draggable Bottom Sheet Card
         // Calculate dynamic height to ensure the card stops near the bottom edge
-        val bottomMarginPx = with(density) { 
+        val bottomMarginPx = with(density) {
             4.dp.toPx()
         }
         val sheetHeight = with(density) {
@@ -383,11 +417,15 @@ fun MapScreen(
                                             maxExpandedOffsetPx to SheetState.FULLY_EXPANDED
                                         )
                                     }
-                                    val closest = targets.minByOrNull { kotlin.math.abs(sheetOffsetY.value - it.first) } 
-                                        ?: (collapsedOffsetPx to SheetState.COLLAPSED)
+                                    val closest =
+                                        targets.minByOrNull { kotlin.math.abs(sheetOffsetY.value - it.first) }
+                                            ?: (collapsedOffsetPx to SheetState.COLLAPSED)
                                     sheetState = closest.second
                                     coroutineScope.launch {
-                                        sheetOffsetY.animateTo(closest.first, animationSpec = tween(250))
+                                        sheetOffsetY.animateTo(
+                                            closest.first,
+                                            animationSpec = tween(250)
+                                        )
                                     }
                                 },
                                 onDrag = { change, dragAmount ->
@@ -420,9 +458,9 @@ fun MapScreen(
                             .height(4.dp)
                             .background(Color.Gray.copy(alpha = 0.4f), RoundedCornerShape(2.dp))
                     )
-                    
+
                     Spacer(modifier = Modifier.height(14.dp))
-                    
+
                     // Header state: selected windmill details or scanning or displaying count
                     if (uiState.selectedWindmill != null) {
                         Box(
@@ -467,7 +505,10 @@ fun MapScreen(
                             modifier = Modifier
                                 .width(150.dp)
                                 .height(6.dp)
-                                .background(Color.Gray.copy(alpha = 0.15f), RoundedCornerShape(3.dp))
+                                .background(
+                                    Color.Gray.copy(alpha = 0.15f),
+                                    RoundedCornerShape(3.dp)
+                                )
                         ) {
                             var progress by remember { mutableStateOf(0f) }
                             LaunchedEffect(uiState.isScanning) {
@@ -523,11 +564,11 @@ fun MapScreen(
                         }
                     }
                 }
-                
+
                 // Sheet Body Content (revealed when expanded)
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider(color = Color.Black.copy(alpha = 0.05f * progress))
-                
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -544,7 +585,8 @@ fun MapScreen(
                             val hash = uiState.selectedWindmill.name.hashCode()
                             val windSpeed = 15 + (kotlin.math.abs(hash) % 36)
                             val maxPower = 1.5 + (kotlin.math.abs(hash) % 40) / 10.0
-                            val currentPower = (maxPower * (windSpeed / 50.0)).coerceAtMost(maxPower)
+                            val currentPower =
+                                (maxPower * (windSpeed / 50.0)).coerceAtMost(maxPower)
                             val powerStr = "${(currentPower * 10).toInt() / 10.0} MW"
 
                             if (fullyExpandedProgress > 0f) {
@@ -610,8 +652,8 @@ fun MapScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .onGloballyPositioned { coordinates ->
-                                        detailsCardHeightDp = with(density) { 
-                                            coordinates.size.height.toDp() 
+                                        detailsCardHeightDp = with(density) {
+                                            coordinates.size.height.toDp()
                                         }
                                     }
                             )
@@ -700,7 +742,7 @@ fun MapScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
                             Spacer(modifier = Modifier.height(4.dp))
-                            
+
                             LazyColumn(
                                 modifier = Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -766,9 +808,9 @@ fun MapScreen(
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
                             }
-                            
+
                             Spacer(modifier = Modifier.height(16.dp))
-                            
+
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center
@@ -793,12 +835,12 @@ fun MapScreen(
                                     )
                                 }
                             }
-                            
+
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }
-                
+
                 WindradBottomBar(
                     currentDestination = currentDestination,
                     onDestinationSelected = onDestinationSelected,
@@ -817,7 +859,7 @@ fun MapScreen(
             // We float 16.dp above the top edge of the bottom sheet
             -(sheetHeightAboveBottom + 16.dp)
         }
-        
+
         Button(
             onClick = onScanClicked,
             colors = ButtonDefaults.buttonColors(
@@ -947,7 +989,7 @@ fun ThreeDotsLoadingAnimation(
     gap: Dp = 4.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition()
-    
+
     val offset1 by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = -6f,
@@ -1034,7 +1076,7 @@ fun StarIcon(
         val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
         val outerRadius = sizeMin / 2f
         val innerRadius = outerRadius * 0.4f
-        
+
         val path = androidx.compose.ui.graphics.Path().apply {
             for (i in 0 until 10) {
                 val angle = i * kotlin.math.PI / 5 - kotlin.math.PI / 2
@@ -1049,7 +1091,7 @@ fun StarIcon(
             }
             close()
         }
-        
+
         if (isFilled) {
             drawPath(path, color = filledColor)
             drawPath(
