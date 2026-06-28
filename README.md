@@ -1,9 +1,9 @@
 This is a Kotlin Multiplatform project targeting Android, iOS.
 
-*** Important:
+**Important:**
 
-For the app to run correctly the database needs to be initialized.
-1. Download the `alleWindräder.csv` from my Onedrive[https://1drv.ms/x/c/a9b135f3ac3e1939/IQAleJ1fvqDiQ7vGDVvrzpFmASL2yhj13aCFl5xfjd9ahbE?e=GJbj65]
+For the app to run correctly, the database needs to be initialized:
+1. Download `alleWindräder.numbers` (or `alleWindräder.csv`, see generate_db.py) from [OneDrive](https://1drv.ms/x/c/a9b135f3ac3e1939/IQAleJ1fvqDiQ7vGDVvrzpFmASL2yhj13aCFl5xfjd9ahbE?e=GJbj65)
 2. Put the file in the root directory of the project.
 3. Run the script:
 ```bash
