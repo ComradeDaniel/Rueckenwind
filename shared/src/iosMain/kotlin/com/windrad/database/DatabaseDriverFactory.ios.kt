@@ -44,9 +44,9 @@ actual class DatabaseDriverFactory actual constructor(context: Any) {
             }
         }
 
-        return NativeSqliteDriver(
-            schema = WindradDatabase.Schema,
-            name = dbName
-        )
+return NativeSqliteDriver(
+    schema = WindradDatabase.Schema,
+    name = dbPath
+)
     }
 }
