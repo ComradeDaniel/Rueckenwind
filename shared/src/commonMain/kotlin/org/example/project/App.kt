@@ -17,6 +17,9 @@ import com.windrad.data.rememberLocationPermissionRequester
 import com.windrad.database.DatabaseDriverFactory
 import com.windrad.ui.collection.CollectionScreen
 import com.windrad.ui.collection.CollectionViewModel
+import com.windrad.ui.collection.list.CollectionRoute
+import com.windrad.ui.collection.list.StateOverviewScreen
+import com.windrad.ui.collection.list.TurbineListScreen
 import com.windrad.ui.faq.FaqScreen
 import com.windrad.ui.map.MapScreen
 import com.windrad.ui.map.MapViewModel
@@ -32,16 +35,16 @@ fun App(driverFactory: DatabaseDriverFactory) {
         val mapUiState by mapViewModel.uiState.collectAsState()
         val collectionViewModel = remember { CollectionViewModel(driverFactory) }
         val collectionUiState by collectionViewModel.uiState.collectAsState()
+        val collectionListUiState by collectionViewModel.listUiState.collectAsState()
 
-        // Android: request location permission before running the scan.
-        // iOS: no-op (keeps existing behavior unchanged).
         val requestLocationPermissionThenScan = rememberLocationPermissionRequester { granted ->
             if (granted) {
                 mapViewModel.onScanClicked()
-            } else {
-                // Permission denied: keep behavior safe by doing nothing.
             }
         }
+
+        val showBottomBar = currentDestination != WindradDestination.MAP &&
+                collectionListUiState.route != CollectionRoute.TURBINE_LIST
 
         Box(modifier = Modifier.fillMaxSize()) {
             // Screen Content - keep all screens in composition tree for caching
@@ -68,11 +71,35 @@ fun App(driverFactory: DatabaseDriverFactory) {
             }
 
                 WindradDestination.COLLECTION -> {
-                    CollectionScreen(
-                        uiState = collectionUiState,
-                        onFaqClicked = { currentDestination = WindradDestination.FAQ },
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    when (collectionListUiState.route) {
+                        CollectionRoute.KPI -> {
+                            CollectionScreen(
+                                uiState = collectionUiState,
+                                onViewCollectionClicked = { collectionViewModel.openStateOverview() },
+                                onFaqClicked = { currentDestination = WindradDestination.FAQ },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+
+                        CollectionRoute.STATE_OVERVIEW -> {
+                            StateOverviewScreen(
+                                uiState = collectionListUiState,
+                                onBackClicked = { collectionViewModel.back() },
+                                onStateSelected = { collectionViewModel.openState(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+
+                        CollectionRoute.TURBINE_LIST -> {
+                            TurbineListScreen(
+                                uiState = collectionListUiState,
+                                onBackClicked = { collectionViewModel.back() },
+                                onFilterChanged = { collectionViewModel.setFilter(it) },
+                                onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
                 }
 
                 WindradDestination.FAQ -> {
@@ -80,15 +107,19 @@ fun App(driverFactory: DatabaseDriverFactory) {
                 }
             }
 
-            // Floating Bottom Navigation Bar (only visible on non-map screens)
-            if (currentDestination != WindradDestination.MAP) {
+            if (showBottomBar) {
                 WindradBottomBar(
                     currentDestination = currentDestination,
-                    onDestinationSelected = { currentDestination = it },
+                    onDestinationSelected = { destination ->
+                        if (destination != WindradDestination.COLLECTION) {
+                            collectionViewModel.resetToKpi()
+                        }
+                        currentDestination = destination
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(horizontal = 24.dp)
-                        .padding(bottom = 20.dp)
+                        .padding(bottom = 20.dp),
                 )
             }
         }

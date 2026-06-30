@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.windrad.data.WindradRepository
 import com.windrad.database.DatabaseDriverFactory
 import com.windrad.database.createDatabase
+import com.windrad.ui.collection.list.CollectionFilter
+import com.windrad.ui.collection.list.CollectionListUiState
+import com.windrad.ui.collection.list.CollectionRoute
+import com.windrad.ui.collection.list.buildLetterIndex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +21,9 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CollectionUiState())
     val uiState: StateFlow<CollectionUiState> = _uiState.asStateFlow()
+
+    private val _listUiState = MutableStateFlow(CollectionListUiState())
+    val listUiState: StateFlow<CollectionListUiState> = _listUiState.asStateFlow()
 
     init {
         loadOverview()
@@ -41,6 +48,100 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                 } else {
                     it.copy(collectedCount = 0)
                 }
+            }
+        }
+    }
+
+    fun openStateOverview() {
+        _listUiState.update {
+            it.copy(
+                route = CollectionRoute.STATE_OVERVIEW,
+                isLoading = true,
+            )
+        }
+        viewModelScope.launch {
+            val overview = repository.getCollectionOverview()
+            _listUiState.update {
+                it.copy(
+                    overview = overview,
+                    isLoading = false,
+                )
+            }
+        }
+    }
+
+    fun openState(state: String?) {
+        _listUiState.update {
+            it.copy(
+                route = CollectionRoute.TURBINE_LIST,
+                selectedState = state,
+                filter = CollectionFilter.FOUND,
+                expandedTurbineId = null,
+                isLoading = true,
+            )
+        }
+        loadTurbines(state, CollectionFilter.FOUND)
+    }
+
+    fun setFilter(filter: CollectionFilter) {
+        val state = _listUiState.value.selectedState
+        _listUiState.update {
+            it.copy(
+                filter = filter,
+                expandedTurbineId = null,
+                isLoading = true,
+            )
+        }
+        loadTurbines(state, filter)
+    }
+
+    fun toggleTurbineExpanded(id: String) {
+        _listUiState.update { state ->
+            state.copy(
+                expandedTurbineId = if (state.expandedTurbineId == id) null else id,
+            )
+        }
+    }
+
+    fun back() {
+        when (_listUiState.value.route) {
+            CollectionRoute.TURBINE_LIST -> {
+                _listUiState.update {
+                    it.copy(
+                        route = CollectionRoute.STATE_OVERVIEW,
+                        selectedState = null,
+                        turbines = emptyList(),
+                        letterIndex = emptyMap(),
+                        expandedTurbineId = null,
+                    )
+                }
+            }
+
+            CollectionRoute.STATE_OVERVIEW -> {
+                _listUiState.update {
+                    CollectionListUiState(route = CollectionRoute.KPI)
+                }
+            }
+
+            CollectionRoute.KPI -> Unit
+        }
+    }
+
+    fun resetToKpi() {
+        _listUiState.update {
+            CollectionListUiState(route = CollectionRoute.KPI)
+        }
+    }
+
+    private fun loadTurbines(state: String?, filter: CollectionFilter) {
+        viewModelScope.launch {
+            val turbines = repository.getTurbines(state, filter)
+            _listUiState.update {
+                it.copy(
+                    turbines = turbines,
+                    letterIndex = buildLetterIndex(turbines),
+                    isLoading = false,
+                )
             }
         }
     }

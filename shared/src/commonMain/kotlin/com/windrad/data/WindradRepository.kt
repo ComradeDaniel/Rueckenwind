@@ -1,6 +1,10 @@
 package com.windrad.data
 
 import com.windrad.database.WindradDatabase
+import com.windrad.ui.collection.list.CollectionFilter
+import com.windrad.ui.collection.list.CollectionOverviewData
+import com.windrad.ui.collection.list.FederalStateSummary
+import com.windrad.ui.collection.list.TurbineListItem
 import com.windrad.ui.map.NearbyWindmill
 import com.windrad.ui.map.SearchSuggestion
 import com.windrad.ui.map.WindmillDetails
@@ -254,6 +258,65 @@ class WindradRepository(private val db: WindradDatabase) {
     suspend fun getCollectedCount(): Int = withContext(Dispatchers.Default) {
         val row = db.windradDbQueries.countTotalCollected().executeAsOne()
         row.collected_count?.toInt() ?: 0
+    }
+
+    suspend fun getCollectionOverview(): CollectionOverviewData = withContext(Dispatchers.Default) {
+        val totalRow = db.windradDbQueries.countTotalCollected().executeAsOne()
+        val totalCount = totalRow.total.toInt()
+        val totalCollected = totalRow.collected_count?.toInt() ?: 0
+
+        val stateRows = db.windradDbQueries.countCollectedByFederalState().executeAsList()
+        val states = stateRows
+            .filter { it.federal_state != null }
+            .map { row ->
+                FederalStateSummary(
+                    name = row.federal_state!!,
+                    collectedCount = row.collected_count?.toInt() ?: 0,
+                    totalCount = row.total.toInt(),
+                )
+            }
+            .sortedBy { it.name }
+
+        val topStateName = states
+            .filter { it.collectedCount > 0 }
+            .maxByOrNull { it.collectedCount }
+            ?.name
+
+        CollectionOverviewData(
+            totalCollected = totalCollected,
+            totalCount = totalCount,
+            topStateName = topStateName,
+            states = states,
+        )
+    }
+
+    suspend fun getTurbines(
+        state: String?,
+        filter: CollectionFilter,
+    ): List<TurbineListItem> = withContext(Dispatchers.Default) {
+        when (filter) {
+            CollectionFilter.FOUND -> db.windradDbQueries
+                .selectFoundTurbinesByState(state)
+                .executeAsList()
+                .map { row ->
+                    TurbineListItem(
+                        id = row.unit_MaStR_ID,
+                        municipality = row.municipality ?: "Unbekannt",
+                        displayName = row.unit_display_name ?: row.unit_MaStR_ID,
+                    )
+                }
+
+            CollectionFilter.NOT_FOUND -> db.windradDbQueries
+                .selectNotFoundTurbinesByState(state)
+                .executeAsList()
+                .map { row ->
+                    TurbineListItem(
+                        id = row.unit_MaStR_ID,
+                        municipality = row.municipality ?: "Unbekannt",
+                        displayName = row.unit_display_name ?: row.unit_MaStR_ID,
+                    )
+                }
+        }
     }
 
     private fun formatCapacity(capacity: Double): String {
