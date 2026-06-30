@@ -24,6 +24,7 @@ data class MapUiState(
     val searchQuery: String = "",
     val searchSuggestions: List<SearchSuggestion> = emptyList(),
     val scannedWindmills: List<NearbyWindmill> = emptyList(),
+    val weatherInfo: com.windrad.domain.WeatherInfo? = null
 )
 
 data class NearbyWindmill(

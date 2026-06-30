@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.windrad.data.LocationProvider
 import com.windrad.data.WindradRepository
 import com.windrad.database.DatabaseDriverFactory
+import com.windrad.data.WeatherRepository
 import com.windrad.database.createDatabase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,6 +33,7 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
     private val db = createDatabase(driverFactory)
     private val repository = WindradRepository(db)
     private val locationProvider = LocationProvider(driverFactory)
+    private val weatherRepository = WeatherRepository()
     private var searchJob: Job? = null
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -121,11 +123,19 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
      */
     fun selectWindmill(windmillId: String?) {
         if (windmillId == null) {
-            _uiState.update { it.copy(selectedWindmill = null) }
+            _uiState.update { it.copy(selectedWindmill = null, weatherInfo = null) }
         } else {
             viewModelScope.launch {
                 val details = repository.loadWindmillDetails(windmillId)
-                _uiState.update { it.copy(selectedWindmill = details) }
+                _uiState.update { it.copy(selectedWindmill = details, weatherInfo = null) }
+                if (details != null) {
+                    val weather = weatherRepository.fetchCurrentWeather(
+                        lat = details.latitude,
+                        lon = details.longitude,
+                        cacheKey = windmillId
+                    )
+                    _uiState.update { it.copy(weatherInfo = weather) }
+                }
             }
         }
     }

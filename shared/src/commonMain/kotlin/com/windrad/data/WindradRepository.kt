@@ -115,7 +115,10 @@ class WindradRepository(private val db: WindradDatabase) {
             technologyText = row.power_generation_technology ?: "Horizontalläufer",
             locationText = locationText,
             isOnshore = isOnshore,
-            totalHeight = totalHeight
+            totalHeight = totalHeight,
+            latitude = row.latitude_wgs84 ?: 0.0,
+            longitude = row.longitude_wgs84 ?: 0.0,
+            rotorDiameter = row.turbine_rotor_diameter
         )
     }
 

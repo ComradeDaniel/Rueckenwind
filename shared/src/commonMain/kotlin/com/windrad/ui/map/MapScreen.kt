@@ -1,6 +1,7 @@
 package com.windrad.ui.map
 
 import androidx.compose.animation.core.Animatable
+import kotlin.math.PI
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateFloat
@@ -9,6 +10,7 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -605,11 +607,28 @@ fun MapScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             val hash = uiState.selectedWindmill.name.hashCode()
-                            val windSpeed = 15 + (kotlin.math.abs(hash) % 36)
-                            val maxPower = 1.5 + (kotlin.math.abs(hash) % 40) / 10.0
-                            val currentPower =
-                                (maxPower * (windSpeed / 50.0)).coerceAtMost(maxPower)
-                            val powerStr = "${(currentPower * 10).toInt() / 10.0} MW"
+                            
+                            val windSpeedDisplay = if (uiState.weatherInfo != null) {
+                                "${uiState.weatherInfo.windSpeed} km/h"
+                            } else {
+                                "– km/h"
+                            }
+                            
+                            val windSpeedForPower = uiState.weatherInfo?.windSpeed ?: (15.0 + (kotlin.math.abs(hash) % 36))
+                            
+                            val rotorRadius = (uiState.selectedWindmill.rotorDiameter ?: 126.0) / 2.0
+                            val area = PI * rotorRadius * rotorRadius
+                            val windSpeedMs = windSpeedForPower / 3.6
+                            val powerWatts = 0.5 * 1.22 * area * (windSpeedMs * windSpeedMs * windSpeedMs)
+                            val currentPowerKw = powerWatts / 1000.0
+
+                            val opStatus = uiState.selectedWindmill.operatingStatus
+                            val powerStr = when {
+                                opStatus.startsWith("Inaktiv") -> "0 kW (Außer Betrieb)"
+                                opStatus.startsWith("Geplant") -> "0 kW (Noch nicht am Netz angeschlossen)"
+                                uiState.weatherInfo == null -> "– kW"
+                                else -> "${currentPowerKw.toInt()} kW"
+                            }
 
                             if (fullyExpandedProgress > 0f) {
                                 Column(
@@ -632,7 +651,7 @@ fun MapScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
                                             Text(
-                                                text = "$windSpeed km/h",
+                                                text = windSpeedDisplay,
                                                 color = AppColors.PureDark,
                                                 fontSize = 17.sp,
                                                 fontWeight = FontWeight.Normal,

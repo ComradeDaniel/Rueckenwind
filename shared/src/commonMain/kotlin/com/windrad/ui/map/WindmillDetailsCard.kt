@@ -26,6 +26,8 @@ import kotlin.math.cos
 import kotlin.math.PI
 import com.windrad.ui.theme.AppColors
 
+import com.windrad.domain.WeatherInfo
+
 /**
  * Reusable data model representing the details of a wind turbine.
  * Filled with Figma-specified default dummy values.
@@ -40,7 +42,11 @@ data class WindmillDetails(
     val technologyText: String = "Horizontalläufer",
     val locationText: String = "An Land",
     val isOnshore: Boolean = true,
-    val totalHeight: Double = 166.0
+    val totalHeight: Double = 166.0,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val rotorDiameter: Double? = 126.0,
+    val weatherInfo: WeatherInfo? = null
 )
 
 /**
