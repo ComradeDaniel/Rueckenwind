@@ -2,6 +2,7 @@ package org.example.project
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,31 +36,47 @@ fun App(driverFactory: DatabaseDriverFactory) {
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            // Screen Content
-            when (currentDestination) {
-                WindradDestination.MAP -> {
-                    MapScreen(
-                        uiState = mapUiState,
-                        onScanClicked = { requestLocationPermissionThenScan() },
-                        onWindmillSelected = { mapViewModel.selectWindmill(it) },
-                        onSearchQueryChanged = { mapViewModel.onSearchQueryChanged(it) },
-                        onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
-                        onClearSearch = { mapViewModel.clearSearch() },
-                        onToggleFavorite = { mapViewModel.toggleFavorite(it) },
-                        onCollectAllClicked = { mapViewModel.collectAllScanned() },
-                        currentDestination = currentDestination,
-                        onDestinationSelected = { currentDestination = it },
-                        modifier = Modifier.fillMaxSize()
-                    )
+            // Screen Content - keep all screens in composition tree for caching
+            Box(
+                modifier = if (currentDestination == WindradDestination.MAP) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
                 }
+            ) {
+                MapScreen(
+                    uiState = mapUiState,
+                    onScanClicked = { requestLocationPermissionThenScan() },
+                    onWindmillSelected = { mapViewModel.selectWindmill(it) },
+                    onSearchQueryChanged = { mapViewModel.onSearchQueryChanged(it) },
+                    onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
+                    onClearSearch = { mapViewModel.clearSearch() },
+                    onToggleFavorite = { mapViewModel.toggleFavorite(it) },
+                    onCollectAllClicked = { mapViewModel.collectAllScanned() },
+                    currentDestination = currentDestination,
+                    onDestinationSelected = { currentDestination = it },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
-                WindradDestination.COLLECTION -> {
-                    CollectionScreen(modifier = Modifier.fillMaxSize())
+            Box(
+                modifier = if (currentDestination == WindradDestination.COLLECTION) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
                 }
+            ) {
+                CollectionScreen(modifier = Modifier.fillMaxSize())
+            }
 
-                WindradDestination.FAQ -> {
-                    FaqScreen(modifier = Modifier.fillMaxSize())
+            Box(
+                modifier = if (currentDestination == WindradDestination.FAQ) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
                 }
+            ) {
+                FaqScreen(modifier = Modifier.fillMaxSize())
             }
 
             // Floating Bottom Navigation Bar (only visible on non-map screens)

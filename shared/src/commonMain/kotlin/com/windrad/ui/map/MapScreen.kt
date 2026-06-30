@@ -187,26 +187,30 @@ fun MapScreen(
         )
 
         // Calculate expansion progress (0f = collapsed, 1f = fully expanded)
-        val progress =
-            remember(collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value) {
-                val targetOffset =
-                    if (uiState.selectedWindmill != null) contentOffsetPx else maxExpandedOffsetPx
-                val range = collapsedOffsetPx - targetOffset
-                if (range > 0f) {
-                    ((collapsedOffsetPx - sheetOffsetY.value) / range).coerceIn(0f, 1f)
-                } else {
-                    0f
-                }
+        val progress = remember(collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx, sheetOffsetY.value) {
+            val targetOffset = if (uiState.selectedWindmill != null) contentOffsetPx else maxExpandedOffsetPx
+            val range = collapsedOffsetPx - targetOffset
+            if (range > 0f) {
+                ((collapsedOffsetPx - sheetOffsetY.value) / range).coerceIn(0f, 1f)
+            } else {
+                0f
             }
-
+        }
+        
         // Sync offset when state or constraints change
         LaunchedEffect(sheetState, collapsedOffsetPx, contentOffsetPx, maxExpandedOffsetPx) {
+            if (collapsedOffsetPx <= 0f) return@LaunchedEffect
             val target = when (sheetState) {
                 SheetState.COLLAPSED -> collapsedOffsetPx
                 SheetState.HALF_EXPANDED -> contentOffsetPx
                 SheetState.FULLY_EXPANDED -> maxExpandedOffsetPx
             }
-            sheetOffsetY.animateTo(target, animationSpec = tween(300))
+            // If offset is at 0 (was hidden), snap instantly to avoid unwanted slide-down animation.
+            if (sheetOffsetY.value <= 0f) {
+                sheetOffsetY.snapTo(target)
+            } else {
+                sheetOffsetY.animateTo(target, animationSpec = tween(300))
+            }
         }
 
 
