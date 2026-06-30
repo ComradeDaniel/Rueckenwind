@@ -4,6 +4,9 @@ data class MapUiState(
     val centerLatitude: Double = 51.1657, // Deutschland-Zentrum
     val centerLongitude: Double = 10.4515,
     val zoom: Double = 5.5,
+    val userLatitude: Double? = null,
+    val userLongitude: Double? = null,
+    val scanRadiusKm: Double = 5.0,
     val windparkCount: Int = 0,
     val isScanning: Boolean = false,
 

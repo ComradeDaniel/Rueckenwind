@@ -41,6 +41,18 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
 
     init {
         loadWindmillGeoJson()
+        startLocationTracking()
+    }
+
+    private fun startLocationTracking() {
+        locationProvider.startLocationUpdates { lat, lon ->
+            _uiState.update { it.copy(userLatitude = lat, userLongitude = lon) }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        locationProvider.stopLocationUpdates()
     }
 
     /**
@@ -71,14 +83,22 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
             _uiState.update { it.copy(isScanning = true) }
             val startTime = Clock.System.now().toEpochMilliseconds()
             
-            // Try to get GPS location
-            val gpsLocation = try {
-                println("MapViewModel: querying locationProvider...")
-                locationProvider.getCurrentLocation()
-            } catch (e: Exception) {
-                println("MapViewModel: locationProvider query failed: $e")
-                e.printStackTrace()
-                null
+            // Try to get GPS location from continuous tracking first
+            var gpsLocation = _uiState.value.let { state ->
+                if (state.userLatitude != null && state.userLongitude != null) {
+                    Pair(state.userLatitude, state.userLongitude)
+                } else null
+            }
+            
+            if (gpsLocation == null) {
+                gpsLocation = try {
+                    println("MapViewModel: querying locationProvider as fallback...")
+                    locationProvider.getCurrentLocation()
+                } catch (e: Exception) {
+                    println("MapViewModel: locationProvider query failed: $e")
+                    e.printStackTrace()
+                    null
+                }
             }
             println("MapViewModel: gpsLocation obtained: $gpsLocation")
             
@@ -86,7 +106,7 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                 println("MapViewModel: scanning coordinates: lat=${gpsLocation.first}, lon=${gpsLocation.second}")
                 // Measure DB query time
                 val dbStart = Clock.System.now().toEpochMilliseconds()
-                val result = repository.findWindmillsWithinRadius(gpsLocation.first, gpsLocation.second, 5.0)
+                val result = repository.findWindmillsWithinRadius(gpsLocation.first, gpsLocation.second, _uiState.value.scanRadiusKm)
                 val dbElapsed = Clock.System.now().toEpochMilliseconds() - dbStart
                 println("MapViewModel: DB query took ${dbElapsed}ms, returned ${result.size} windmills")
                 result
@@ -103,6 +123,14 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
             println("MapViewModel: waiting remaining delay: ${remainingDelay}ms")
             delay(remainingDelay)
             
+            val radius = _uiState.value.scanRadiusKm
+            val lat = gpsLocation?.first ?: 50.0
+            val latRad = lat * kotlin.math.PI / 180.0
+            val paddingFactor = 1.5
+            val dynamicZoom = kotlin.math.log2(
+                (40075.0 * kotlin.math.cos(latRad)) / (2.0 * radius * paddingFactor)
+            ).coerceIn(1.0, 20.0)
+
             _uiState.update {
                 it.copy(
                     isScanning = false,
@@ -110,7 +138,7 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                     scannedWindmills = nearby,
                     centerLatitude = gpsLocation?.first ?: it.centerLatitude,
                     centerLongitude = gpsLocation?.second ?: it.centerLongitude,
-                    zoom = if (gpsLocation != null) 12.0 else it.zoom
+                    zoom = if (gpsLocation != null) dynamicZoom else it.zoom
                 )
             }
             println("MapViewModel: scan completed, updated state and focused region at lat=${gpsLocation?.first}, lon=${gpsLocation?.second}")

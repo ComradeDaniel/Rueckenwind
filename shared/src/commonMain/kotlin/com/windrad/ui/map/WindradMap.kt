@@ -59,6 +59,9 @@ fun WindradMap(
     centerLatitude: Double,
     centerLongitude: Double,
     zoom: Double,
+    userLatitude: Double?,
+    userLongitude: Double?,
+    scanRadiusKm: Double,
     windmillGeoJson: String?,
     onZoomChanged: (Double) -> Unit,
     onWindmillClicked: (String) -> Unit,
@@ -258,6 +261,60 @@ fun WindradMap(
                             ClickResult.Consume
                         }
                     )
+                }
+
+                if (userLatitude != null && userLongitude != null) {
+                    val userLocationGeoJson = """
+                        {
+                          "type": "FeatureCollection",
+                          "features": [
+                            {
+                              "type": "Feature",
+                              "geometry": {
+                                "type": "Point",
+                                "coordinates": [$userLongitude, $userLatitude]
+                              }
+                            }
+                          ]
+                        }
+                    """.trimIndent()
+                    val userSource = rememberGeoJsonSource(
+                        data = GeoJsonData.JsonString(userLocationGeoJson)
+                    )
+
+                    val radiusGeoJson = remember(userLatitude, userLongitude, scanRadiusKm) {
+                        com.windrad.util.GeoJsonUtils.buildRadiusCircleGeoJson(userLatitude, userLongitude, scanRadiusKm)
+                    }
+                    val radiusSource = rememberGeoJsonSource(
+                        data = GeoJsonData.JsonString(radiusGeoJson)
+                    )
+
+                    org.maplibre.compose.layers.Anchor.Top {
+                        org.maplibre.compose.layers.FillLayer(
+                            id = "user-radius-fill",
+                            source = radiusSource,
+                            color = const(AppColors.MapsBlue),
+                            opacity = const(0.15f)
+                        )
+
+                        CircleLayer(
+                            id = "user-location-shadow",
+                            source = userSource,
+                            color = const(Color.Black),
+                            opacity = const(0.15f),
+                            radius = const(11.dp),
+                            translate = const(DpOffset(0.dp, 2.dp)) // Drop shadow y=2
+                        )
+
+                        CircleLayer(
+                            id = "user-location-dot",
+                            source = userSource,
+                            color = const(AppColors.MapsBlue),
+                            radius = const(9.dp),
+                            strokeWidth = const(2.dp),
+                            strokeColor = const(Color.White)
+                        )
+                    }
                 }
                 }
             }

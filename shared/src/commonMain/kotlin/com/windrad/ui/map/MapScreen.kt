@@ -221,6 +221,9 @@ fun MapScreen(
             centerLatitude = uiState.centerLatitude,
             centerLongitude = uiState.centerLongitude,
             zoom = uiState.zoom,
+            userLatitude = uiState.userLatitude,
+            userLongitude = uiState.userLongitude,
+            scanRadiusKm = uiState.scanRadiusKm,
             windmillGeoJson = uiState.windmillGeoJson,
             onZoomChanged = { /* Zoom-Änderungen für zukünftige Features nutzbar */ },
             onWindmillClicked = { id ->

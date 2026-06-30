@@ -112,4 +112,55 @@ actual class LocationProvider actual constructor(private val driverFactory: Data
         println("LocationProvider: fresh location query timed out or failed, fallback to last known: $fallback")
         return fallback
     }
+
+    private var continuousListener: LocationListener? = null
+
+    @SuppressLint("MissingPermission")
+    actual fun startLocationUpdates(onUpdate: (Double, Double) -> Unit) {
+        val context = driverFactory.context
+        val hasFine = context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val hasCoarse = context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        
+        if (!hasFine && !hasCoarse) return
+        
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return
+
+        val provider = if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            LocationManager.GPS_PROVIDER
+        } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            LocationManager.NETWORK_PROVIDER
+        } else {
+            return
+        }
+
+        stopLocationUpdates()
+
+        continuousListener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                onUpdate(location.latitude, location.longitude)
+            }
+            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+            override fun onProviderEnabled(provider: String) {}
+            override fun onProviderDisabled(provider: String) {}
+        }
+
+        try {
+            locationManager.requestLocationUpdates(provider, 2000L, 5f, continuousListener!!, Looper.getMainLooper())
+        } catch (e: Exception) {
+            // ignore
+        }
+    }
+
+    actual fun stopLocationUpdates() {
+        continuousListener?.let { listener ->
+            val context = driverFactory.context
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+            try {
+                locationManager?.removeUpdates(listener)
+            } catch (e: Exception) {
+                // ignore
+            }
+            continuousListener = null
+        }
+    }
 }

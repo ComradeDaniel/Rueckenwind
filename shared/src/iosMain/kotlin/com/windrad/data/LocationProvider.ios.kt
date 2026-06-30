@@ -41,7 +41,13 @@ actual class LocationProvider actual constructor(driverFactory: DatabaseDriverFa
         }
 
         fun startRequestingLocation() {
-            locationManager.requestLocation()
+            if (delegate.onContinuousLocationUpdate != null) {
+                // If continuous updates are active, just wait for the next update
+                // Since we already set onLocationUpdated, it will fire automatically on the next tick
+                // Or if we already have a location, we could return it immediately, but let's wait
+            } else {
+                locationManager.requestLocation()
+            }
         }
 
         val status = CLLocationManager.authorizationStatus()
@@ -66,14 +72,60 @@ actual class LocationProvider actual constructor(driverFactory: DatabaseDriverFa
             }
             locationManager.requestWhenInUseAuthorization()
         } else {
+            // Check if we already have a location from continuous updates
+            val lastLoc = delegate.lastLocation
+            if (lastLoc != null) {
+                cleanUp()
+                if (continuation.isActive) {
+                    val lat = lastLoc.coordinate.useContents { latitude }
+                    val lon = lastLoc.coordinate.useContents { longitude }
+                    continuation.resume(Pair(lat, lon))
+                }
+            } else {
+                startRequestingLocation()
+            }
+        }
+    }
+    actual fun startLocationUpdates(onUpdate: (Double, Double) -> Unit) {
+        delegate.onContinuousLocationUpdate = { location ->
+            if (location != null) {
+                val lat = location.coordinate.useContents { latitude }
+                val lon = location.coordinate.useContents { longitude }
+                onUpdate(lat, lon)
+            }
+        }
+        
+        fun startRequestingLocation() {
+            locationManager.startUpdatingLocation()
+        }
+
+        val status = CLLocationManager.authorizationStatus()
+        if (status == kCLAuthorizationStatusNotDetermined) {
+            delegate.onAuthorizationChanged = { newStatus ->
+                if (newStatus != kCLAuthorizationStatusNotDetermined) {
+                    delegate.onAuthorizationChanged = null
+                    if (newStatus == kCLAuthorizationStatusAuthorizedWhenInUse || newStatus == kCLAuthorizationStatusAuthorizedAlways) {
+                        startRequestingLocation()
+                    }
+                }
+            }
+            locationManager.requestWhenInUseAuthorization()
+        } else if (status == kCLAuthorizationStatusAuthorizedWhenInUse || status == kCLAuthorizationStatusAuthorizedAlways) {
             startRequestingLocation()
         }
+    }
+
+    actual fun stopLocationUpdates() {
+        locationManager.stopUpdatingLocation()
+        delegate.onContinuousLocationUpdate = null
     }
 }
 
 private class iOSLocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
     var onLocationUpdated: ((CLLocation?) -> Unit)? = null
+    var onContinuousLocationUpdate: ((CLLocation?) -> Unit)? = null
     var onAuthorizationChanged: ((CLAuthorizationStatus) -> Unit)? = null
+    var lastLocation: CLLocation? = null
 
     override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
         onAuthorizationChanged?.invoke(manager.authorizationStatus)
@@ -85,10 +137,15 @@ private class iOSLocationDelegate : NSObject(), CLLocationManagerDelegateProtoco
 
     override fun locationManager(manager: CLLocationManager, didUpdateLocations: List<*>) {
         val location = didUpdateLocations.lastOrNull() as? CLLocation
+        if (location != null) {
+            lastLocation = location
+        }
         onLocationUpdated?.invoke(location)
+        onContinuousLocationUpdate?.invoke(location)
     }
 
     override fun locationManager(manager: CLLocationManager, didFailWithError: platform.Foundation.NSError) {
         onLocationUpdated?.invoke(null)
+        onContinuousLocationUpdate?.invoke(null)
     }
 }
