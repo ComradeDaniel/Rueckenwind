@@ -109,6 +109,13 @@ fun TurbineListScreen(
                                 turbine = turbine,
                                 isFound = isFound,
                                 isExpanded = uiState.expandedTurbineId == turbine.id,
+                                isDetailsLoading = uiState.isDetailsLoading &&
+                                        uiState.expandedTurbineId == turbine.id,
+                                details = if (uiState.expandedTurbineId == turbine.id) {
+                                    uiState.expandedDetails
+                                } else {
+                                    null
+                                },
                                 onClick = { onTurbineClicked(turbine.id) },
                             )
                         }
@@ -193,6 +200,8 @@ private fun TurbineRow(
     turbine: TurbineListItem,
     isFound: Boolean,
     isExpanded: Boolean,
+    isDetailsLoading: Boolean,
+    details: CollectionTurbineDetails?,
     onClick: () -> Unit,
 ) {
     val chevronRotation by animateFloatAsState(
@@ -271,13 +280,21 @@ private fun TurbineRow(
         }
 
         AnimatedVisibility(visible = isExpanded) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 45.dp, bottom = 12.dp)
-                    .height(80.dp)
-                    .background(AppColors.IndicatorBg, RoundedCornerShape(12.dp)),
-            )
+            when {
+                isDetailsLoading -> {
+                    CollectionTurbineDetailsLoading(
+                        isCollected = isFound,
+                        modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
+                    )
+                }
+
+                details != null -> {
+                    CollectionTurbineDetailsCard(
+                        details = details,
+                        modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
+                    )
+                }
+            }
         }
 
         HorizontalDivider(color = AppColors.LightGray)

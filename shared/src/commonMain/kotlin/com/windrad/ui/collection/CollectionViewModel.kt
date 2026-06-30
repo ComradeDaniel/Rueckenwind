@@ -77,6 +77,8 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                 selectedState = state,
                 filter = CollectionFilter.FOUND,
                 expandedTurbineId = null,
+                expandedDetails = null,
+                isDetailsLoading = false,
                 isLoading = true,
             )
         }
@@ -89,6 +91,8 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
             it.copy(
                 filter = filter,
                 expandedTurbineId = null,
+                expandedDetails = null,
+                isDetailsLoading = false,
                 isLoading = true,
             )
         }
@@ -96,10 +100,37 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
     }
 
     fun toggleTurbineExpanded(id: String) {
-        _listUiState.update { state ->
-            state.copy(
-                expandedTurbineId = if (state.expandedTurbineId == id) null else id,
+        val current = _listUiState.value
+        if (current.expandedTurbineId == id) {
+            _listUiState.update {
+                it.copy(
+                    expandedTurbineId = null,
+                    expandedDetails = null,
+                    isDetailsLoading = false,
+                )
+            }
+            return
+        }
+
+        _listUiState.update {
+            it.copy(
+                expandedTurbineId = id,
+                expandedDetails = null,
+                isDetailsLoading = true,
             )
+        }
+        viewModelScope.launch {
+            val details = repository.loadCollectionTurbineDetails(id)
+            _listUiState.update { state ->
+                if (state.expandedTurbineId == id) {
+                    state.copy(
+                        expandedDetails = details,
+                        isDetailsLoading = false,
+                    )
+                } else {
+                    state
+                }
+            }
         }
     }
 
@@ -113,6 +144,8 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                         turbines = emptyList(),
                         letterIndex = emptyMap(),
                         expandedTurbineId = null,
+                        expandedDetails = null,
+                        isDetailsLoading = false,
                     )
                 }
             }

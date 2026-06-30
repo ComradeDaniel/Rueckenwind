@@ -38,6 +38,8 @@ data class CollectionListUiState(
     val turbines: List<TurbineListItem> = emptyList(),
     val letterIndex: Map<Char, Int> = emptyMap(),
     val expandedTurbineId: String? = null,
+    val expandedDetails: CollectionTurbineDetails? = null,
+    val isDetailsLoading: Boolean = false,
     val isLoading: Boolean = false,
 )
 

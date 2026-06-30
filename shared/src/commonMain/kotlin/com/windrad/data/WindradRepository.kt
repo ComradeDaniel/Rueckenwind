@@ -3,6 +3,7 @@ package com.windrad.data
 import com.windrad.database.WindradDatabase
 import com.windrad.ui.collection.list.CollectionFilter
 import com.windrad.ui.collection.list.CollectionOverviewData
+import com.windrad.ui.collection.list.CollectionTurbineDetails
 import com.windrad.ui.collection.list.FederalStateSummary
 import com.windrad.ui.collection.list.TurbineListItem
 import com.windrad.ui.map.NearbyWindmill
@@ -104,6 +105,12 @@ class WindradRepository(private val db: WindradDatabase) {
                 onshoreOffshoreType = row.onshore_offshore_type
             )
 
+            val sights = db.windradDbQueries.selectAllComparableSights().executeAsList()
+            val bestSight = findBestComparableSight(
+                hubHeight = row.turbine_hub_height,
+                sights = sights.map { it.name to it.height },
+            )
+
             val rotorText = calculateRotorComparisonText(
                 diameter = row.turbine_rotor_diameter
             )
@@ -112,12 +119,23 @@ class WindradRepository(private val db: WindradDatabase) {
             val locationText = calculateLocationText(row.onshore_offshore_type)
         val totalHeight = (row.turbine_hub_height ?: 0.0) + (row.turbine_rotor_diameter ?: 0.0) / 2.0
 
+            val heightText = when {
+                row.turbine_hub_height != null && bestSight != null ->
+                    "${row.turbine_hub_height.toInt()}m ~ $bestSight"
+
+                row.turbine_hub_height != null ->
+                    "${row.turbine_hub_height.toInt()}m"
+
+                else -> "Wert leider nicht bekannt"
+            }
+
             WindmillDetails(
                 name = displayName,
                 windparkName = row.wind_plant_name,
             operatingStatus = operatingStatus,
                 commissioningDate = commissioningDate,
                 householdsFedText = householdsText,
+                heightComparisonText = heightText,
                 rotorComparisonText = rotorText,
                 technologyText = row.power_generation_technology ?: "Horizontalläufer",
             locationText = locationText,
@@ -126,6 +144,49 @@ class WindradRepository(private val db: WindradDatabase) {
             latitude = row.latitude_wgs84 ?: 0.0,
             longitude = row.longitude_wgs84 ?: 0.0,
             rotorDiameter = row.turbine_rotor_diameter
+            )
+        }
+
+    suspend fun loadCollectionTurbineDetails(id: String): CollectionTurbineDetails? =
+        withContext(Dispatchers.Default) {
+            val row = db.windradDbQueries.selectWindmillById(id).executeAsOneOrNull()
+                ?: return@withContext null
+
+            val sights = db.windradDbQueries.selectAllComparableSights().executeAsList()
+            val bestSight = findBestComparableSight(
+                hubHeight = row.turbine_hub_height,
+                sights = sights.map { it.name to it.height },
+            )
+
+            val (operatingStatus, commissioningDate) = calculatePeriodAndDate(
+                status = row.operating_status,
+                commissioningDateStr = row.unit_commissioning_date,
+                finalDecommissioningDateStr = row.final_decommissioning_date,
+                plannedCommissioningDateStr = row.planned_commissioning_date,
+            )
+
+            val isOnshore = row.onshore_offshore_type != "Windkraft auf See"
+            val isCollected = row.collected == 1L
+
+            CollectionTurbineDetails(
+                operatingStatus = operatingStatus,
+                commissioningDate = commissioningDate,
+                annualEnergyText = calculateAnnualEnergyText(
+                    netCapacity = row.unit_net_nominal_capacity,
+                    onshoreOffshoreType = row.onshore_offshore_type,
+                ),
+                householdsText = calculateHouseholdsTextSimple(
+                    netCapacity = row.unit_net_nominal_capacity,
+                    onshoreOffshoreType = row.onshore_offshore_type,
+                ),
+                hubHeightMeters = row.turbine_hub_height?.roundToInt(),
+                heightComparisonName = bestSight,
+                rotorDiameterMeters = row.turbine_rotor_diameter?.roundToInt(),
+                rotorFieldsText = calculateRotorFieldsText(row.turbine_rotor_diameter),
+                technologyText = formatTechnologyText(row.power_generation_technology),
+                locationText = calculateLocationText(row.onshore_offshore_type),
+                isOnshore = isOnshore,
+                isCollected = isCollected,
             )
         }
 
@@ -473,14 +534,81 @@ internal fun calculateRotorComparisonText(
     diameter: Double?
 ): String {
     if (diameter == null || diameter <= 0.0) return "Wert leider nicht bekannt"
+    val fieldsText = calculateRotorFieldsText(diameter) ?: return "Wert leider nicht bekannt"
+    return "${diameter.toInt()}m ~ $fieldsText"
+}
+
+internal fun calculateRotorFieldsText(diameter: Double?): String? {
+    if (diameter == null) return null
     val radius = diameter / 2.0
     val area = radius * radius * kotlin.math.PI
     val fields = area / 7140.0
     val rounded = (fields * 10.0).roundToInt()
     val integerPart = rounded / 10
     val fractionalPart = kotlin.math.abs(rounded % 10)
-    val formattedFields = "$integerPart,$fractionalPart"
-    return "${diameter.toInt()}m ~ $formattedFields Fußballfelder"
+    return "$integerPart,$fractionalPart Fußballfelder"
+}
+
+internal fun findBestComparableSight(
+    hubHeight: Double?,
+    sights: List<Pair<String, Double>>,
+): String? {
+    if (hubHeight == null || sights.isEmpty()) return null
+    return sights.minByOrNull { kotlin.math.abs(it.second - hubHeight) }?.first
+}
+
+internal fun calculateHeightComparisonText(hubHeight: Double?): String {
+    if (hubHeight == null) return "Wert leider nicht bekannt"
+    return "${hubHeight.toInt()}m"
+}
+
+// TODO diesen AI slop mal prüfen sieht mir halluziniert aus
+internal fun calculateAnnualEnergyText(
+    netCapacity: Double?,
+    onshoreOffshoreType: String?,
+): String {
+    if (netCapacity == null) return "Wert leider nicht bekannt"
+    val fullLoadHours = if (onshoreOffshoreType != "Windkraft auf See") 1770 else 3278
+    val kwh = netCapacity * fullLoadHours
+    return when {
+        kwh >= 1_000_000 -> {
+            val millions = (kwh / 1_000_000.0 * 10.0).roundToInt() / 10.0
+            val formatted = millions.toString().replace('.', ',')
+            "$formatted Millionen kWh (pro Jahr)"
+        }
+
+        kwh >= 1_000 -> {
+            val formatted = formatGermanNumber(kwh)
+            "$formatted kWh (pro Jahr)"
+        }
+
+        else -> "${kwh.roundToInt()} kWh (pro Jahr)"
+    }
+}
+
+// TODO diesen AI slop mal prüfen sieht mir halluziniert aus
+internal fun calculateHouseholdsTextSimple(
+    netCapacity: Double?,
+    onshoreOffshoreType: String?,
+): String {
+    if (netCapacity == null) return "Versorgt: Wert leider nicht bekannt"
+    val isOnshore = onshoreOffshoreType != "Windkraft auf See"
+    val fullLoadHours = if (isOnshore) 1770 else 3278
+    val households = ((netCapacity * fullLoadHours) / 2277.0).roundToInt()
+    return "Versorgt ca. ${formatGermanNumber(households.toDouble())} Haushalte"
+}
+
+internal fun formatTechnologyText(powerGenerationTechnology: String?): String {
+    return when {
+        powerGenerationTechnology.isNullOrBlank() -> "Horizontalläufer"
+        powerGenerationTechnology.contains("horizontal", ignoreCase = true) -> "Horizontalläufer"
+        else -> powerGenerationTechnology
+    }
+}
+
+private fun formatGermanNumber(value: Double): String {
+    val rounded = value.roundToInt()
+    return rounded.toString().reversed().chunked(3).joinToString(".").reversed()
 }
 
 internal fun calculateLocationText(onshoreOffshoreType: String?): String {
