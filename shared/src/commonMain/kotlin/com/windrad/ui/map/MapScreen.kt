@@ -157,13 +157,24 @@ fun MapScreen(
             if (details == null) {
                 "files/new_hori_anim.json"
             } else {
-                val isVertical = details.technologyText == "Vertikalläufer"
-                if (isVertical) {
-                    "files/animation_vertikallaufer.json"
-                } else if (details.isOnshore) {
-                    "files/new_hori_anim.json"
+                val opStatus = details.operatingStatus
+                val isNotRunning = opStatus.startsWith("Inaktiv") || opStatus.startsWith("Geplant")
+                
+                if (isNotRunning) {
+                    if (details.isOnshore) {
+                        "files/Nur_wind_land.json"
+                    } else {
+                        "files/nur_wind_wasser.json"
+                    }
                 } else {
-                    "files/animation_windrad_wasser.json"
+                    val isVertical = details.technologyText == "Vertikalläufer"
+                    if (isVertical) {
+                        "files/animation_vertikallaufer.json"
+                    } else if (details.isOnshore) {
+                        "files/new_hori_anim.json"
+                    } else {
+                        "files/animation_windrad_wasser.json"
+                    }
                 }
             }
         }
@@ -183,9 +194,15 @@ fun MapScreen(
 
         val composition by rememberLottieComposition(compositionSpec)
 
+        val windSpeed = uiState.weatherInfo?.windSpeed ?: uiState.selectedWindmill?.let {
+            15.0 + (kotlin.math.abs(it.hashCode()) % 36)
+        } ?: 15.0
+        val lottieSpeed = (windSpeed / 20.0).toFloat().coerceIn(0.1f, 4.0f)
+
         val lottieProgress by animateLottieCompositionAsState(
             composition = composition,
-            iterations = Int.MAX_VALUE
+            iterations = Int.MAX_VALUE,
+            speed = lottieSpeed
         )
 
         // Calculate expansion progress (0f = collapsed, 1f = fully expanded)
@@ -628,7 +645,7 @@ fun MapScreen(
                             val opStatus = uiState.selectedWindmill.operatingStatus
                             val powerStr = when {
                                 opStatus.startsWith("Inaktiv") -> "0 kW (Außer Betrieb)"
-                                opStatus.startsWith("Geplant") -> "0 kW (Noch nicht am Netz angeschlossen)"
+                                opStatus.startsWith("Geplant") -> "0 kW (in Planung)"
                                 uiState.weatherInfo == null -> "– kW"
                                 else -> "${currentPowerKw.toInt()} kW"
                             }
