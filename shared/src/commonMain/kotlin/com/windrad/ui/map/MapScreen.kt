@@ -47,6 +47,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -606,7 +610,7 @@ fun MapScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (sheetState != SheetState.COLLAPSED) "In deiner Nähe" else "${uiState.windparkCount} Windparks",
+                                text = if (sheetState != SheetState.COLLAPSED) "In deiner Nähe" else "${uiState.windparkCount} Windkraftanlagen",
                                 color = AppColors.PureDark,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -692,6 +696,7 @@ fun MapScreen(
                                             .fillMaxWidth()
                                             .padding(horizontal = 26.5.dp, vertical = 4.dp)
                                     ) {
+                                        HorizontalDivider(color = Color.Black.copy(alpha = 0.08f))
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -714,7 +719,6 @@ fun MapScreen(
                                                 letterSpacing = (-0.43).sp
                                             )
                                         }
-                                        HorizontalDivider(color = Color.Black.copy(alpha = 0.08f))
                                     }
 
                                     Box(
@@ -768,7 +772,7 @@ fun MapScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Scanne deine Umgebung, um Windparks in deiner Nähe freizuschalten.",
+                                text = "Scanne deine Umgebung, um Windkraftanlagen in deiner Nähe freizuschalten.",
                                 fontSize = 14.sp,
                                 color = Color.Gray,
                                 modifier = Modifier.padding(horizontal = 24.dp),
@@ -825,7 +829,7 @@ fun MapScreen(
                                 .padding(horizontal = 24.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = "${uiState.windparkCount} Windparks gefunden",
+                                text = "${uiState.windparkCount} Windkraftanlagen gefunden",
                                 fontSize = 15.sp,
                                 color = Color.Gray,
                                 letterSpacing = (-0.23).sp
@@ -870,14 +874,8 @@ fun MapScreen(
                                                     letterSpacing = (-0.43).sp
                                                 )
                                                 Text(
-                                                    text = item.name,
+                                                    text = "${item.name}  -  ${item.distanceText}",
                                                     fontSize = 15.sp,
-                                                    color = Color.Gray,
-                                                    letterSpacing = (-0.23).sp
-                                                )
-                                                Text(
-                                                    text = item.distanceText,
-                                                    fontSize = 13.sp,
                                                     color = Color.Gray,
                                                     letterSpacing = (-0.23).sp
                                                 )
