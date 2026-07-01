@@ -5,6 +5,6 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.windrad.database.DatabaseDriverFactory
 
 fun MainViewController() = ComposeUIViewController {
-    val driverFactory = remember { DatabaseDriverFactory() }
+    val driverFactory = remember { DatabaseDriverFactory(Unit) }
     App(driverFactory = driverFactory)
 }

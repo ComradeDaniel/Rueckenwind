@@ -43,20 +43,23 @@ actual class DatabaseDriverFactory actual constructor(context: Any) {
                 )
             }
 
-            val bundlePath = requireNotNull(
-                NSBundle.mainBundle.pathForResource("windrad", ofType = "db")
-            ) { "Pre-populated database windrad.db not found in app bundle resources." }
+            val bundlePath = NSBundle.mainBundle.pathForResource("windrad", ofType = "db")
+            if (bundlePath != null) {
+                fileManager.copyItemAtPath(bundlePath, toPath = dbPath, error = null)
+            } else {
+                println("Warning: Pre-populated database windrad.db not found in app bundle resources. Proceeding with empty database.")
+            }
 
-            fileManager.copyItemAtPath(bundlePath, toPath = dbPath, error = null)
-
-            check(fileManager.fileExistsAtPath(dbPath)) {
-                "Failed to copy pre-populated database to $dbPath"
+            if (bundlePath != null) {
+                check(fileManager.fileExistsAtPath(dbPath)) {
+                    "Failed to copy pre-populated database to $dbPath"
+                }
             }
         }
 
 return NativeSqliteDriver(
     schema = WindradDatabase.Schema,
-    name = dbPath
+    name = dbName
 )
     }
 }
