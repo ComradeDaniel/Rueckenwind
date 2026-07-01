@@ -44,8 +44,22 @@ class MapViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
         startLocationTracking()
     }
 
+    private var lastTrackedLat: Double? = null
+    private var lastTrackedLon: Double? = null
+
     private fun startLocationTracking() {
         locationProvider.startLocationUpdates { lat, lon ->
+            val last = lastTrackedLat
+            val lastLon = lastTrackedLon
+            // Only update if > 10 meters distance (haversine approximation)
+            if (last != null && lastLon != null) {
+                val dlat = lat - last
+                val dlon = lon - lastLon
+                val distSq = dlat * dlat + dlon * dlon
+                if (distSq < (0.0001 * 0.0001)) return@startLocationUpdates
+            }
+            lastTrackedLat = lat
+            lastTrackedLon = lon
             _uiState.update { it.copy(userLatitude = lat, userLongitude = lon) }
         }
     }

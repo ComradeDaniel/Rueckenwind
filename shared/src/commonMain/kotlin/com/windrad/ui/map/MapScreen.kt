@@ -247,7 +247,7 @@ fun MapScreen(
             userLongitude = uiState.userLongitude,
             scanRadiusKm = uiState.scanRadiusKm,
             windmillGeoJson = uiState.windmillGeoJson,
-            onZoomChanged = { /* Zoom-Änderungen für zukünftige Features nutzbar */ },
+
             onWindmillClicked = { id ->
                 onWindmillSelected(id)
                 sheetState = SheetState.HALF_EXPANDED

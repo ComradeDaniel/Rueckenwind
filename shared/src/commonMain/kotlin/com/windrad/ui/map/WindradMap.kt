@@ -63,7 +63,7 @@ fun WindradMap(
     userLongitude: Double?,
     scanRadiusKm: Double,
     windmillGeoJson: String?,
-    onZoomChanged: (Double) -> Unit,
+
     onWindmillClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -88,10 +88,7 @@ fun WindradMap(
         }
     }
 
-    // Zoom-Änderungen nach oben melden
-    LaunchedEffect(cameraState.position.zoom) {
-        onZoomChanged(cameraState.position.zoom)
-    }
+
 
     val turbinePainter = painterResource(Res.drawable.wind_turbine_icon_white)
 
@@ -264,20 +261,9 @@ fun WindradMap(
                 }
 
                 if (userLatitude != null && userLongitude != null) {
-                    val userLocationGeoJson = """
-                        {
-                          "type": "FeatureCollection",
-                          "features": [
-                            {
-                              "type": "Feature",
-                              "geometry": {
-                                "type": "Point",
-                                "coordinates": [$userLongitude, $userLatitude]
-                              }
-                            }
-                          ]
-                        }
-                    """.trimIndent()
+                    val userLocationGeoJson = remember(userLatitude, userLongitude) {
+                        """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[$userLongitude,$userLatitude]}}]}"""
+                    }
                     val userSource = rememberGeoJsonSource(
                         data = GeoJsonData.JsonString(userLocationGeoJson)
                     )
