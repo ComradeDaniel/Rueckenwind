@@ -8,6 +8,7 @@ import com.windrad.database.createDatabase
 import com.windrad.ui.collection.list.CollectionFilter
 import com.windrad.ui.collection.list.CollectionListUiState
 import com.windrad.ui.collection.list.CollectionRoute
+import com.windrad.ui.collection.list.TurbineListItem
 import com.windrad.ui.collection.list.buildLetterIndex
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -76,6 +77,7 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                 route = CollectionRoute.TURBINE_LIST,
                 selectedState = state,
                 filter = CollectionFilter.FOUND,
+                searchQuery = "",
                 expandedTurbineId = null,
                 expandedDetails = null,
                 isDetailsLoading = false,
@@ -143,6 +145,7 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                         selectedState = null,
                         turbines = emptyList(),
                         letterIndex = emptyMap(),
+                        searchQuery = "",
                         expandedTurbineId = null,
                         expandedDetails = null,
                         isDetailsLoading = false,
@@ -166,16 +169,72 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
         }
     }
 
+    private var fullTurbineList: List<TurbineListItem> = emptyList()
+
     private fun loadTurbines(state: String?, filter: CollectionFilter) {
         viewModelScope.launch {
-            val turbines = repository.getTurbines(state, filter)
-            _listUiState.update {
-                it.copy(
-                    turbines = turbines,
-                    letterIndex = buildLetterIndex(turbines),
-                    isLoading = false,
-                )
-            }
+            fullTurbineList = repository.getTurbines(state, filter)
+            applyFilters()
+        }
+    }
+
+    fun onSearchQueryChanged(query: String) {
+        _listUiState.update { it.copy(searchQuery = query) }
+        applyFilters()
+    }
+
+    private fun applyFilters() {
+        val query = _listUiState.value.searchQuery.trim().lowercase()
+        val processedQuery = query.replace(" ", "").replace("-", "")
+
+        val filtered = if (query.isEmpty()) {
+            fullTurbineList
+        } else {
+            fullTurbineList.filter { turbine ->
+                val municipalityMatch = if (turbine.municipality != "Unbekannt") {
+                    turbine.municipality.lowercase().startsWith(query)
+                } else false
+
+                val processedDisplayName =
+                    turbine.displayName.lowercase().replace(" ", "").replace("-", "")
+                val displayNameMatch = processedDisplayName.startsWith(processedQuery)
+
+                municipalityMatch || displayNameMatch
+            }.sortedWith(
+                compareBy<TurbineListItem> { turbine ->
+                    val municipalityDirectMatch = if (turbine.municipality != "Unbekannt") {
+                        turbine.municipality.lowercase() == query
+                    } else false
+
+                    val processedDisplayName =
+                        turbine.displayName.lowercase().replace(" ", "").replace("-", "")
+                    val displayNameDirectMatch = processedDisplayName == processedQuery
+
+                    if (municipalityDirectMatch || displayNameDirectMatch) 0 else 1
+                }.thenBy { turbine ->
+                    val municipalityMatch = if (turbine.municipality != "Unbekannt") {
+                        turbine.municipality.lowercase().startsWith(query)
+                    } else false
+
+                    val processedDisplayName =
+                        turbine.displayName.lowercase().replace(" ", "").replace("-", "")
+                    val displayNameMatch = processedDisplayName.startsWith(processedQuery)
+
+                    val lengths = mutableListOf<Int>()
+                    if (municipalityMatch) lengths.add(turbine.municipality.length)
+                    if (displayNameMatch) lengths.add(turbine.displayName.length)
+
+                    lengths.minOrNull() ?: Int.MAX_VALUE
+                }
+            )
+        }
+
+        _listUiState.update {
+            it.copy(
+                turbines = filtered,
+                letterIndex = buildLetterIndex(filtered),
+                isLoading = false,
+            )
         }
     }
 

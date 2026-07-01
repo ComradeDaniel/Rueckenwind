@@ -41,6 +41,7 @@ data class CollectionListUiState(
     val expandedDetails: CollectionTurbineDetails? = null,
     val isDetailsLoading: Boolean = false,
     val isLoading: Boolean = false,
+    val searchQuery: String = "",
 )
 
 fun buildLetterIndex(turbines: List<TurbineListItem>): Map<Char, Int> {

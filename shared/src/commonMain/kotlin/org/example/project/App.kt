@@ -95,6 +95,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 uiState = collectionListUiState,
                                 onBackClicked = { collectionViewModel.back() },
                                 onFilterChanged = { collectionViewModel.setFilter(it) },
+                                onSearchQueryChanged = { collectionViewModel.onSearchQueryChanged(it) },
                                 onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
                                 modifier = Modifier.fillMaxSize(),
                             )
