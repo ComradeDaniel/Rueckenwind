@@ -14,9 +14,9 @@ import java.io.FileOutputStream
  * Bei App-Updates wird die DB NICHT überschrieben, damit der
  * Sammelfortschritt des Nutzers erhalten bleibt.
  */
-actual class DatabaseDriverFactory actual constructor(private val context: Any) {
+actual class DatabaseDriverFactory actual constructor(val context: Any) {
 
-    private val androidContext = context as Context
+    val androidContext = context as Context
 
     actual fun createDriver(): SqlDriver {
         val dbName = "windrad.db"

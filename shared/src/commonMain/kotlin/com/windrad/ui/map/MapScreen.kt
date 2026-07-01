@@ -10,7 +10,6 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,10 +46,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -84,7 +79,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.windrad.ui.components.MicIcon
+import com.windrad.ui.icons.MicIcon
+import com.windrad.ui.icons.WindTurbineIcon
 import com.windrad.ui.navigation.WindradBottomBar
 import com.windrad.ui.navigation.WindradDestination
 import com.windrad.ui.theme.AppColors
@@ -95,8 +91,6 @@ import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import windrad.shared.generated.resources.Res
-import org.jetbrains.compose.resources.painterResource
-import windrad.shared.generated.resources.wind_turbine_icon
 
 
 @Composable
@@ -860,7 +854,7 @@ fun MapScreen(
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Image(
-                                                    painter = painterResource(Res.drawable.wind_turbine_icon),
+                                                    imageVector = WindTurbineIcon,
                                                     contentDescription = null,
                                                     modifier = Modifier.fillMaxSize()
                                                 )

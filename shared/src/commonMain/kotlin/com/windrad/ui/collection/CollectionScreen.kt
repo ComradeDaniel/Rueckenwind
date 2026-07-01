@@ -1,5 +1,6 @@
 package com.windrad.ui.collection
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,7 +46,7 @@ import com.windrad.ui.collection.kpi.StromerzeugungSheet
 import com.windrad.ui.collection.kpi.formatGermanNumber
 import com.windrad.ui.collection.kpi.formatMetricValue
 import com.windrad.ui.components.InfoAlertDialog
-import com.windrad.ui.navigation.WindradDestination
+import com.windrad.ui.icons.CollectCardsBase
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
 
@@ -242,10 +243,9 @@ fun CollectionScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Icon(
-                                imageVector = WindradDestination.COLLECTION.icon,
-                                contentDescription = null,
+                                imageVector = CollectCardsBase,
+                                contentDescription = "SAMMLUNG",
                                 tint = Color.White,
-                                modifier = Modifier.size(24.dp),
                             )
                             Text(
                                 text = "Zur gesamten Sammlung",

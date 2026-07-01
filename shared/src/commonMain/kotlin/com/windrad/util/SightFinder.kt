@@ -1,37 +1,57 @@
 package com.windrad.util
 
-import org.jetbrains.compose.resources.DrawableResource
-import windrad.shared.generated.resources.*
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.windrad.ui.icons.BerlinFernsehTowerIcon
+import com.windrad.ui.icons.BrandenburgerTorIcon
+import com.windrad.ui.icons.ChurchIcon
+import com.windrad.ui.icons.Doppeldecker
+import com.windrad.ui.icons.EifelTowerIcon
+import com.windrad.ui.icons.Einkaufswagen
+import com.windrad.ui.icons.ElbphilharmonieIcon
+import com.windrad.ui.icons.HollywoodSignIcon
+import com.windrad.ui.icons.HouseIcon
+import com.windrad.ui.icons.JesusStatueIcon
+import com.windrad.ui.icons.KoelnerDomIcon
+import com.windrad.ui.icons.LanternIcon
+import com.windrad.ui.icons.LightHouseIcon
+import com.windrad.ui.icons.MainTowerIcon
+import com.windrad.ui.icons.OlympiaTowerIcon
+import com.windrad.ui.icons.PisaTowerIcon
+import com.windrad.ui.icons.PyramidIcon
+import com.windrad.ui.icons.SphinxVonGizeh
+import com.windrad.ui.icons.StatueOfLibertyIcon
+import com.windrad.ui.icons.TorIcon
+import com.windrad.ui.icons.VictoryColumnIcon
 
 data class SightInfo(
     val name: String,
-    val icon: DrawableResource,
+    val icon: ImageVector,
     val height: Double
 )
 
 object SightFinder {
     val sights = listOf(
-        SightInfo("Standard-Einkaufswagen", Res.drawable.einkaufswagen, 1.0),
-        SightInfo("Fußballtor", Res.drawable.tor_icon, 2.5),
-        SightInfo("Berliner Doppeldeckerbus", Res.drawable.doppeldecker, 4.0),
-        SightInfo("Straßenlaterne", Res.drawable.lantern_icon, 6.0),
-        SightInfo("Einfamilienhaus", Res.drawable.house_icon, 10.0),
-        SightInfo("Hollywood-Sign", Res.drawable.hollywood_sign_icon, 14.0),
-        SightInfo("Sphinx von Gizeh", Res.drawable.sphinx_von_gizeh, 20.0),
-        SightInfo("Brandenburger Tor", Res.drawable.brandenburger_tor_icon, 26.0),
-        SightInfo("Christusstatue", Res.drawable.jesus_statue_icon, 30.0),
-        SightInfo("Leuchtturm Westerheversand", Res.drawable.light_house_icon, 41.0),
-        SightInfo("Schiefer Turm von Pisa", Res.drawable.pisa_tower_icon, 55.0),
-        SightInfo("Siegessäule", Res.drawable.victory_column_icon, 67.0),
-        SightInfo("Freiheitsstatue", Res.drawable.statue_of_liberty_icon, 93.0),
-        SightInfo("Münchner Frauenkirche", Res.drawable.church_icon, 100.0),
-        SightInfo("Elbphilharmonie", Res.drawable.elbphilharmonie_icon, 110.0),
-        SightInfo("Cheops-Pyramide", Res.drawable.pyramid_icon, 137.0),
-        SightInfo("Kölner Dom", Res.drawable.koelner_dom_icon, 157.0),
-        SightInfo("Main Tower", Res.drawable.main_tower_icon, 200.0),
-        SightInfo("Olympiaturm", Res.drawable.olympia_tower_icon, 291.0),
-        SightInfo("Eiffelturm", Res.drawable.eifel_tower_icon, 300.0),
-        SightInfo("Berliner Fernsehturm", Res.drawable.berlin_fernseh_tower_icon, 368.0)
+        SightInfo("Standard-Einkaufswagen", Einkaufswagen, 1.0),
+        SightInfo("Fußballtor", TorIcon, 2.5),
+        SightInfo("Berliner Doppeldeckerbus", Doppeldecker, 4.0),
+        SightInfo("Straßenlaterne", LanternIcon, 6.0),
+        SightInfo("Einfamilienhaus", HouseIcon, 10.0),
+        SightInfo("Hollywood-Sign", HollywoodSignIcon, 14.0),
+        SightInfo("Sphinx von Gizeh", SphinxVonGizeh, 20.0),
+        SightInfo("Brandenburger Tor", BrandenburgerTorIcon, 26.0),
+        SightInfo("Christusstatue", JesusStatueIcon, 30.0),
+        SightInfo("Leuchtturm Westerheversand", LightHouseIcon, 41.0),
+        SightInfo("Schiefer Turm von Pisa", PisaTowerIcon, 55.0),
+        SightInfo("Siegessäule", VictoryColumnIcon, 67.0),
+        SightInfo("Freiheitsstatue", StatueOfLibertyIcon, 93.0),
+        SightInfo("Münchner Frauenkirche", ChurchIcon, 100.0),
+        SightInfo("Elbphilharmonie", ElbphilharmonieIcon, 110.0),
+        SightInfo("Cheops-Pyramide", PyramidIcon, 137.0),
+        SightInfo("Kölner Dom", KoelnerDomIcon, 157.0),
+        SightInfo("Main Tower", MainTowerIcon, 200.0),
+        SightInfo("Olympiaturm", OlympiaTowerIcon, 291.0),
+        SightInfo("Eiffelturm", EifelTowerIcon, 300.0),
+        SightInfo("Berliner Fernsehturm", BerlinFernsehTowerIcon, 368.0)
     )
 
     fun findNearestSight(targetHeight: Double): SightInfo {

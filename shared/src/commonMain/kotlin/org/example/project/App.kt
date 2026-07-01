@@ -2,8 +2,8 @@ package org.example.project
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,6 +48,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
 
         Box(modifier = Modifier.fillMaxSize()) {
             // Screen Content - keep all screens in composition tree for caching
+
+            // Map Screen
             Box(
                 modifier = if (currentDestination == WindradDestination.MAP) {
                     Modifier.fillMaxSize()
@@ -66,46 +68,59 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     onCollectAllClicked = { mapViewModel.collectAllScanned() },
                     currentDestination = currentDestination,
                     onDestinationSelected = { currentDestination = it },
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
 
-                WindradDestination.COLLECTION -> {
-                    when (collectionListUiState.route) {
-                        CollectionRoute.KPI -> {
-                            CollectionScreen(
-                                uiState = collectionUiState,
-                                onViewCollectionClicked = { collectionViewModel.openStateOverview() },
-                                onFaqClicked = { currentDestination = WindradDestination.FAQ },
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
+            // Collection Screen
+            Box(
+                modifier = if (currentDestination == WindradDestination.COLLECTION) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
+                }
+            ) {
+                when (collectionListUiState.route) {
+                    CollectionRoute.KPI -> {
+                        CollectionScreen(
+                            uiState = collectionUiState,
+                            onViewCollectionClicked = { collectionViewModel.openStateOverview() },
+                            onFaqClicked = { currentDestination = WindradDestination.FAQ },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
 
-                        CollectionRoute.STATE_OVERVIEW -> {
-                            StateOverviewScreen(
-                                uiState = collectionListUiState,
-                                onBackClicked = { collectionViewModel.back() },
-                                onStateSelected = { collectionViewModel.openState(it) },
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
+                    CollectionRoute.STATE_OVERVIEW -> {
+                        StateOverviewScreen(
+                            uiState = collectionListUiState,
+                            onBackClicked = { collectionViewModel.back() },
+                            onStateSelected = { collectionViewModel.openState(it) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
 
-                        CollectionRoute.TURBINE_LIST -> {
-                            TurbineListScreen(
-                                uiState = collectionListUiState,
-                                onBackClicked = { collectionViewModel.back() },
-                                onFilterChanged = { collectionViewModel.setFilter(it) },
-                                onSearchQueryChanged = { collectionViewModel.onSearchQueryChanged(it) },
-                                onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
+                    CollectionRoute.TURBINE_LIST -> {
+                        TurbineListScreen(
+                            uiState = collectionListUiState,
+                            onBackClicked = { collectionViewModel.back() },
+                            onFilterChanged = { collectionViewModel.setFilter(it) },
+                            onSearchQueryChanged = { collectionViewModel.onSearchQueryChanged(it) },
+                            onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
                     }
                 }
+            }
 
-                WindradDestination.FAQ -> {
-                    FaqScreen(modifier = Modifier.fillMaxSize())
+            // FAQ Screen
+            Box(
+                modifier = if (currentDestination == WindradDestination.FAQ) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
                 }
+            ) {
+                FaqScreen(modifier = Modifier.fillMaxSize())
             }
 
             if (showBottomBar) {

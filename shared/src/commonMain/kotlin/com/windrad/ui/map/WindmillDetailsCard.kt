@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.*
 import com.windrad.util.SightFinder
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import org.jetbrains.compose.resources.painterResource
-import windrad.shared.generated.resources.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +25,19 @@ import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.PI
 import com.windrad.ui.theme.AppColors
+import com.windrad.ui.icons.FussballfeldIcon
+import com.windrad.ui.icons.LightningSymbol
+import com.windrad.ui.icons.PowerIcon
+import com.windrad.ui.icons.VertikallaeuferIcon
+import com.windrad.ui.icons.VertikallaeuferIconRotordurchmesser
+import com.windrad.ui.icons.VertikallaeuferIconVertikal
+import com.windrad.ui.icons.VertikallaeuferOffshore
+import com.windrad.ui.icons.VertikallaeuferOnshore
+import com.windrad.ui.icons.WindTurbineHorizontal
+import com.windrad.ui.icons.WindTurbineIcon
+import com.windrad.ui.icons.WindTurbineOffshoreIcon
+import com.windrad.ui.icons.WindTurbineOnshoreIcon
+import com.windrad.ui.icons.WindTurbineRotorDiameter
 
 import com.windrad.domain.WeatherInfo
 
@@ -74,7 +87,7 @@ fun WindmillDetailsCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(Res.drawable.power_icon),
+                imageVector = PowerIcon,
                 contentDescription = "Status",
                 modifier = Modifier.size(20.dp)
             )
@@ -107,7 +120,7 @@ fun WindmillDetailsCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(Res.drawable.lightning_symbol),
+                imageVector = LightningSymbol,
                 contentDescription = "Versorgte Haushalte",
                 modifier = Modifier.size(20.dp)
             )
@@ -161,22 +174,22 @@ fun WindmillDetailsCard(
                         "${details.totalHeight.toInt()}m ~\n${sight.name}"
                     }
                     val isVertical = details.technologyText == "Vertikalläufer"
-                    val turbineIconRes = if (isVertical) {
-                        Res.drawable.vertikallaeufer_icon
+                    val turbineIcon = if (isVertical) {
+                        VertikallaeuferIcon
                     } else {
-                        Res.drawable.wind_turbine_icon
+                        WindTurbineIcon
                     }
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Image(
-                            painter = painterResource(turbineIconRes),
+                            imageVector = turbineIcon,
                             contentDescription = null,
                             modifier = Modifier.size(46.dp)
                         )
                         Image(
-                            painter = painterResource(sight.icon),
+                            imageVector = sight.icon,
                             contentDescription = null,
                             modifier = Modifier.size(46.dp)
                         )
@@ -202,18 +215,18 @@ fun WindmillDetailsCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val isVertical = details.technologyText == "Vertikalläufer"
-                        val rotorIconRes = if (isVertical) {
-                            Res.drawable.vertikallaeufer_icon_rotordurchmesser
+                        val rotorIcon = if (isVertical) {
+                            VertikallaeuferIconRotordurchmesser
                         } else {
-                            Res.drawable.wind_turbine_rotor_diameter
+                            WindTurbineRotorDiameter
                         }
                         Image(
-                            painter = painterResource(rotorIconRes),
+                            imageVector = rotorIcon,
                             contentDescription = null,
                             modifier = Modifier.size(46.dp)
                         )
                         Image(
-                            painter = painterResource(Res.drawable.fussballfeld_icon),
+                            imageVector = FussballfeldIcon,
                             contentDescription = null,
                             modifier = Modifier.size(46.dp)
                         )
@@ -264,13 +277,13 @@ fun WindmillDetailsCard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     val isVertical = details.technologyText == "Vertikalläufer"
-                    val techIconRes = if (isVertical) {
-                        Res.drawable.vertikallaeufer_icon_vertikal
+                    val techIcon = if (isVertical) {
+                        VertikallaeuferIconVertikal
                     } else {
-                        Res.drawable.wind_turbine_horizontal
+                        WindTurbineHorizontal
                     }
                     Image(
-                        painter = painterResource(techIconRes),
+                        imageVector = techIcon,
                         contentDescription = null,
                         modifier = Modifier.size(46.dp)
                     )
@@ -290,14 +303,14 @@ fun WindmillDetailsCard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     val isVertical = details.technologyText == "Vertikalläufer"
-                    val iconRes = when {
-                        details.isOnshore && isVertical -> Res.drawable.vertikallaeufer_onshore
-                        details.isOnshore && !isVertical -> Res.drawable.wind_turbine_onshore_icon
-                        !details.isOnshore && isVertical -> Res.drawable.vertikallaeufer_offshore
-                        else -> Res.drawable.wind_turbine_offshore_icon
+                    val locationIcon = when {
+                        details.isOnshore && isVertical -> VertikallaeuferOnshore
+                        details.isOnshore && !isVertical -> WindTurbineOnshoreIcon
+                        !details.isOnshore && isVertical -> VertikallaeuferOffshore
+                        else -> WindTurbineOffshoreIcon
                     }
                     Image(
-                        painter = painterResource(iconRes),
+                        imageVector = locationIcon,
                         contentDescription = null,
                         modifier = Modifier.size(46.dp)
                     )

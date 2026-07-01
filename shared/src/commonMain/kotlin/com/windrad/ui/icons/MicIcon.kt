@@ -1,4 +1,4 @@
-package com.windrad.ui.components
+package com.windrad.ui.icons
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType

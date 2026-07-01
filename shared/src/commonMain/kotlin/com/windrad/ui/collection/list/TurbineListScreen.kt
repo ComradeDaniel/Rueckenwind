@@ -57,8 +57,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.windrad.ui.components.MicIcon
-import com.windrad.ui.map.WindTurbineIcon
+import com.windrad.ui.icons.MicIcon
+import com.windrad.ui.icons.WindTurbineIcon
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
 import kotlinx.coroutines.launch
@@ -297,9 +297,11 @@ private fun TurbineRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (isFound) {
-                WindTurbineIcon(
+                Icon(
+                    imageVector = WindTurbineIcon,
+                    contentDescription = null,
                     modifier = Modifier.size(24.dp, 35.dp),
-                    color = AppColors.MapsBlue,
+                    tint = AppColors.MapsBlue,
                 )
             } else {
                 Box(
@@ -510,9 +512,11 @@ private fun EmptyTurbineList(
         verticalArrangement = Arrangement.Center,
     ) {
         if (isFound) {
-            WindTurbineIcon(
+            Icon(
+                imageVector = WindTurbineIcon,
+                contentDescription = null,
                 modifier = Modifier.size(48.dp, 70.dp),
-                color = AppColors.MapsBlue,
+                tint = AppColors.MapsBlue,
             )
         } else {
             Box(

@@ -32,12 +32,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.windrad.ui.map.KölnerDomIcon
-import com.windrad.ui.map.SoccerFieldIcon
-import com.windrad.ui.map.WindTurbineHorizontalIcon
-import com.windrad.ui.map.WindTurbineIcon
-import com.windrad.ui.map.WindTurbineLocationIcon
-import com.windrad.ui.map.WindTurbineRotorIcon
+import androidx.compose.foundation.Image
+import com.windrad.ui.icons.FussballfeldIcon
+import com.windrad.ui.icons.KoelnerDomIcon
+import com.windrad.ui.icons.VertikallaeuferIcon
+import com.windrad.ui.icons.VertikallaeuferIconRotordurchmesser
+import com.windrad.ui.icons.VertikallaeuferIconVertikal
+import com.windrad.ui.icons.VertikallaeuferOffshore
+import com.windrad.ui.icons.VertikallaeuferOnshore
+import com.windrad.ui.icons.WindTurbineHorizontal
+import com.windrad.ui.icons.WindTurbineIcon
+import com.windrad.ui.icons.WindTurbineOffshoreIcon
+import com.windrad.ui.icons.WindTurbineOnshoreIcon
+import com.windrad.ui.icons.WindTurbineRotorDiameter
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
 
@@ -97,7 +104,13 @@ fun CollectionTurbineDetailsCard(
             isVertical = true,
             comparisonName = details.heightComparisonName,
             turbineIcon = {
-                WindTurbineIcon(modifier = Modifier.size(28.dp, 42.dp))
+                val isVerticalTech = details.technologyText == "Vertikalläufer"
+                val icon = if (isVerticalTech) VertikallaeuferIcon else WindTurbineIcon
+                Image(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp, 42.dp)
+                )
             },
             showDomIcon = details.heightComparisonName == "Kölner Dom",
         )
@@ -111,7 +124,14 @@ fun CollectionTurbineDetailsCard(
             isVertical = false,
             comparisonName = details.rotorFieldsTextByLength,
             turbineIcon = {
-                WindTurbineRotorIcon(modifier = Modifier.size(30.dp, 46.dp))
+                val isVerticalTech = details.technologyText == "Vertikalläufer"
+                val icon =
+                    if (isVerticalTech) VertikallaeuferIconRotordurchmesser else WindTurbineRotorDiameter
+                Image(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(30.dp, 46.dp)
+                )
             },
             showDomIcon = false,
             showSoccerIcon = true,
@@ -136,18 +156,32 @@ fun CollectionTurbineDetailsCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
+            val isVerticalTech = details.technologyText == "Vertikalläufer"
             TechItem(
                 icon = {
-                    WindTurbineHorizontalIcon(modifier = Modifier.size(32.dp))
+                    val icon =
+                        if (isVerticalTech) VertikallaeuferIconVertikal else WindTurbineHorizontal
+                    Image(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp)
+                    )
                 },
                 label = details.technologyText,
                 accent = accent,
             )
             TechItem(
                 icon = {
-                    WindTurbineLocationIcon(
-                        isOnshore = details.isOnshore,
-                        modifier = Modifier.size(24.dp, 36.dp),
+                    val icon = when {
+                        details.isOnshore && isVerticalTech -> VertikallaeuferOnshore
+                        details.isOnshore && !isVerticalTech -> WindTurbineOnshoreIcon
+                        !details.isOnshore && isVerticalTech -> VertikallaeuferOffshore
+                        else -> WindTurbineOffshoreIcon
+                    }
+                    Image(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp, 36.dp)
                     )
                 },
                 label = details.locationText,
@@ -265,9 +299,17 @@ private fun DimensionRow(
                 color = Color.Black,
             )
             if (showDomIcon) {
-                KölnerDomIcon(modifier = Modifier.size(28.dp, 36.dp))
+                Image(
+                    imageVector = KoelnerDomIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp, 36.dp)
+                )
             } else if (showSoccerIcon) {
-                SoccerFieldIcon(modifier = Modifier.size(36.dp, 24.dp))
+                Image(
+                    imageVector = FussballfeldIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp, 24.dp)
+                )
             }
             if (!comparisonName.isNullOrBlank()) {
                 Text(
