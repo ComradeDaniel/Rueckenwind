@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.windrad.ui.components.MicIcon
 import com.windrad.ui.map.WindTurbineIcon
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
@@ -187,9 +188,11 @@ private fun StaticSearchBar(modifier: Modifier = Modifier) {
                 fontSize = 15.sp,
                 modifier = Modifier.weight(1f),
             )
-            Text(
-                text = "🎤",
-                fontSize = 16.sp,
+            Icon(
+                imageVector = MicIcon,
+                contentDescription = "Sprachsuche",
+                tint = AppColors.DarkIcon,
+                modifier = Modifier.size(20.dp)
             )
         }
     }
