@@ -1,0 +1,145 @@
+-- Tabelle: Alle Windkrafteinheiten aus dem Marktstammdatenregister
+CREATE TABLE windmill_units (
+    unit_MaStR_ID TEXT PRIMARY KEY,
+    unit_display_name TEXT,
+    operating_status TEXT,
+    unit_gross_capacity REAL,
+    unit_net_nominal_capacity REAL,
+    unit_commissioning_date TEXT,
+    unit_registration_date TEXT,
+    federal_state TEXT,
+    postal_code TEXT,
+    city TEXT,
+    cadastral_district TEXT,
+    municipality_code TEXT,
+    municipality TEXT,
+    district TEXT,
+    latitude_wgs84 REAL,
+    longitude_wgs84 REAL,
+    power_generation_technology TEXT,
+    feed_in_type TEXT,
+    wind_plant_name TEXT,
+    onshore_offshore_type TEXT,
+    turbine_hub_height REAL,
+    turbine_rotor_diameter REAL,
+    turbine_manufacturer TEXT,
+    type_designation TEXT,
+    final_decommissioning_date TEXT,
+    planned_commissioning_date TEXT,
+    plant_operator_name_org TEXT,
+    operator_mastr_no TEXT,
+    connecting_grid_operator_name TEXT,
+    voltage_level TEXT,
+    eeg_plant_commissioning_date TEXT,
+    eeg_plant_installed_capacity REAL
+);
+
+-- Tabelle: Sammelstatus jeder Einheit
+CREATE TABLE collected_windmill_units (
+    unit_MaStR_ID TEXT PRIMARY KEY,
+    collected INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(unit_MaStR_ID) REFERENCES windmill_units(unit_MaStR_ID)
+);
+
+-- Tabelle: Vergleichs-Sehenswürdigkeiten für Höhenvergleich
+CREATE TABLE comparable_sights (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    height REAL NOT NULL
+);
+
+-- ============================================================
+-- Queries
+-- ============================================================
+
+-- Alle Windräder mit Collection-Status (JOIN)
+selectAllWindmillsWithCollectionStatus:
+SELECT w.*, IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID;
+
+-- Einzelnes Windrad nach ID
+selectWindmillById:
+SELECT w.*, IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.unit_MaStR_ID = ?;
+
+-- Windräder nach Bundesland filtern
+selectWindmillsByFederalState:
+SELECT w.*, IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.federal_state = ?;
+
+-- Nur gesammelte Windräder
+selectCollectedWindmills:
+SELECT w.*, IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+INNER JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE c.collected = 1;
+
+-- Nur nicht gesammelte Windräder
+selectUncollectedWindmills:
+SELECT w.*, IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE IFNULL(c.collected, 0) = 0;
+
+-- Alle Einheiten eines Windparks
+selectWindmillsByWindPark:
+SELECT w.*, IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.wind_plant_name = ?;
+
+-- Generisches Update des Collection-Status einer einzelnen Einheit
+updateCollectionStatus:
+INSERT OR REPLACE INTO collected_windmill_units (unit_MaStR_ID, collected)
+VALUES (?, ?);
+
+-- Einzelne Einheit freischalten
+collectSingleUnit:
+UPDATE collected_windmill_units
+SET collected = 1
+WHERE unit_MaStR_ID = ?;
+
+-- Ganzen Windpark freischalten (alle Einheiten mit gleichem wind_plant_name)
+collectWindPark:
+UPDATE collected_windmill_units
+SET collected = 1
+WHERE unit_MaStR_ID IN (
+    SELECT unit_MaStR_ID FROM windmill_units WHERE wind_plant_name = ?
+);
+
+-- Anzahl gesammelt und gesamt pro Bundesland
+countCollectedByFederalState:
+SELECT
+    w.federal_state,
+    COUNT(*) AS total,
+    SUM(CASE WHEN IFNULL(c.collected, 0) = 1 THEN 1 ELSE 0 END) AS collected_count
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+GROUP BY w.federal_state
+ORDER BY w.federal_state;
+
+-- Gesamtanzahl gesammelt und gesamt
+countTotalCollected:
+SELECT
+    COUNT(*) AS total,
+    SUM(CASE WHEN IFNULL(c.collected, 0) = 1 THEN 1 ELSE 0 END) AS collected_count
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID;
+
+-- Liste aller vorhandenen Bundesländer
+selectAllFederalStates:
+SELECT DISTINCT federal_state
+FROM windmill_units
+WHERE federal_state IS NOT NULL
+ORDER BY federal_state;
+
+-- Alle Vergleichsobjekte
+selectAllComparableSights:
+SELECT *
+FROM comparable_sights
+ORDER BY height;
