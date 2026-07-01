@@ -30,7 +30,7 @@ actual class DatabaseDriverFactory actual constructor(context: Any) {
             true
         ).first() as String
 
-        val dbDir = "$appSupportPath/databases"
+        val dbDir = appSupportPath
         val dbPath = "$dbDir/$dbName"
 
         if (!fileManager.fileExistsAtPath(dbPath)) {
@@ -57,9 +57,16 @@ actual class DatabaseDriverFactory actual constructor(context: Any) {
             }
         }
 
-return NativeSqliteDriver(
-    schema = WindradDatabase.Schema,
-    name = dbName
-)
+        return NativeSqliteDriver(
+            schema = WindradDatabase.Schema,
+            name = dbName,
+            onConfiguration = { config ->
+                config.copy(
+                    extendedConfig = config.extendedConfig.copy(
+                        basePath = dbDir
+                    )
+                )
+            }
+        )
     }
 }
