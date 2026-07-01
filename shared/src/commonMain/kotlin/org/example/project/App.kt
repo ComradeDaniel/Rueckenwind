@@ -1,48 +1,94 @@
 package org.example.project
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.painterResource
-
-import windrad.shared.generated.resources.Res
-import windrad.shared.generated.resources.compose_multiplatform
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import com.windrad.database.DatabaseDriverFactory
+import com.windrad.data.rememberLocationPermissionRequester
+import com.windrad.ui.collection.CollectionScreen
+import com.windrad.ui.faq.FaqScreen
+import com.windrad.ui.map.MapScreen
+import com.windrad.ui.map.MapViewModel
+import com.windrad.ui.navigation.WindradBottomBar
+import com.windrad.ui.navigation.WindradDestination
+import com.windrad.ui.theme.WindradTheme
 
 @Composable
-@Preview
-fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+fun App(driverFactory: DatabaseDriverFactory) {
+    WindradTheme {
+        var currentDestination by remember { mutableStateOf(WindradDestination.MAP) }
+        val mapViewModel = remember { MapViewModel(driverFactory) }
+        val mapUiState by mapViewModel.uiState.collectAsState()
+
+        // Android: request location permission before running the scan.
+        // iOS: no-op (keeps existing behavior unchanged).
+        val requestLocationPermissionThenScan = rememberLocationPermissionRequester { granted ->
+            if (granted) {
+                mapViewModel.onScanClicked()
+            } else {
+                // Permission denied: keep behavior safe by doing nothing.
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Screen Content - keep all screens in composition tree for caching
+            Box(
+                modifier = if (currentDestination == WindradDestination.MAP) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
                 }
+            ) {
+                MapScreen(
+                    uiState = mapUiState,
+                    onScanClicked = { requestLocationPermissionThenScan() },
+                    onWindmillSelected = { mapViewModel.selectWindmill(it) },
+                    onSearchQueryChanged = { mapViewModel.onSearchQueryChanged(it) },
+                    onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
+                    onClearSearch = { mapViewModel.clearSearch() },
+                    onToggleFavorite = { mapViewModel.toggleFavorite(it) },
+                    onCollectAllClicked = { mapViewModel.collectAllScanned() },
+                    currentDestination = currentDestination,
+                    onDestinationSelected = { currentDestination = it },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            Box(
+                modifier = if (currentDestination == WindradDestination.COLLECTION) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
+                }
+            ) {
+                CollectionScreen(modifier = Modifier.fillMaxSize())
+            }
+
+            Box(
+                modifier = if (currentDestination == WindradDestination.FAQ) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.size(0.dp)
+                }
+            ) {
+                FaqScreen(modifier = Modifier.fillMaxSize())
+            }
+
+            // Floating Bottom Navigation Bar (only visible on non-map screens)
+            if (currentDestination != WindradDestination.MAP) {
+                WindradBottomBar(
+                    currentDestination = currentDestination,
+                    onDestinationSelected = { currentDestination = it },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 20.dp)
+                )
             }
         }
     }

@@ -149,6 +149,11 @@ def create_tables(cursor: sqlite3.Cursor) -> None:
             eeg_plant_installed_capacity REAL
         )
     """)
+    
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_windmill_coords 
+        ON windmill_units(latitude_wgs84, longitude_wgs84)
+    """)
 
     cursor.execute("""
         CREATE TABLE collected_windmill_units (

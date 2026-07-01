@@ -34,10 +34,12 @@ CREATE TABLE windmill_units (
     eeg_plant_installed_capacity REAL
 );
 
+CREATE INDEX IF NOT EXISTS idx_windmill_coords ON windmill_units(latitude_wgs84, longitude_wgs84);
+
 -- Tabelle: Sammelstatus jeder Einheit
 CREATE TABLE collected_windmill_units (
     unit_MaStR_ID TEXT PRIMARY KEY,
-    collected INTEGER NOT NULL DEFAULT 0,
+    collected INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
     FOREIGN KEY(unit_MaStR_ID) REFERENCES windmill_units(unit_MaStR_ID)
 );
 
@@ -143,3 +145,116 @@ selectAllComparableSights:
 SELECT *
 FROM comparable_sights
 ORDER BY height;
+
+-- Zoom-basierte Aggregationsabfragen für Karten-Clustering
+
+selectWindmillCoordinates:
+SELECT
+    w.unit_MaStR_ID AS id,
+    w.unit_display_name AS label,
+    w.latitude_wgs84 AS latitude,
+    w.longitude_wgs84 AS longitude,
+    w.operating_status AS status,
+    IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL;
+
+countWindmillsByFederalState:
+SELECT
+    w.federal_state AS id,
+    w.federal_state AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.federal_state IS NOT NULL AND w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY w.federal_state;
+
+countWindmillsByDistrict:
+SELECT
+    w.district AS id,
+    w.district AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.district IS NOT NULL AND w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY w.district;
+
+countWindmillsByMunicipality:
+SELECT
+    w.municipality AS id,
+    w.municipality AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.municipality IS NOT NULL AND w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY w.municipality;
+
+countWindmillsByWindPark:
+SELECT
+    COALESCE(NULLIF(w.wind_plant_name, ''), w.unit_MaStR_ID) AS id,
+    COALESCE(NULLIF(w.wind_plant_name, ''), w.unit_display_name, w.unit_MaStR_ID) AS label,
+    COUNT(*) AS total_count,
+    AVG(w.latitude_wgs84) AS avg_latitude,
+    AVG(w.longitude_wgs84) AS avg_longitude,
+    MIN(IFNULL(c.collected, 0)) AS all_collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.latitude_wgs84 IS NOT NULL AND w.longitude_wgs84 IS NOT NULL
+GROUP BY COALESCE(NULLIF(w.wind_plant_name, ''), w.unit_MaStR_ID);
+
+searchLocations:
+SELECT type, name, latitude, longitude
+FROM (
+    SELECT 'city' AS type, city AS name, AVG(latitude_wgs84) AS latitude, AVG(longitude_wgs84) AS longitude
+    FROM windmill_units
+    WHERE city LIKE :query
+    GROUP BY city
+
+    UNION ALL
+
+    SELECT 'wind_plant_name' AS type, wind_plant_name AS name, AVG(latitude_wgs84) AS latitude, AVG(longitude_wgs84) AS longitude
+    FROM windmill_units
+    WHERE wind_plant_name LIKE :query AND wind_plant_name IS NOT NULL AND wind_plant_name != ''
+    GROUP BY wind_plant_name
+
+    UNION ALL
+
+    SELECT 'postal_code' AS type, postal_code AS name, AVG(latitude_wgs84) AS latitude, AVG(longitude_wgs84) AS longitude
+    FROM windmill_units
+    WHERE postal_code LIKE :query
+    GROUP BY postal_code
+)
+ORDER BY length(name) ASC
+LIMIT 15;
+
+selectWindmillsInBoundingBox:
+SELECT
+    w.unit_MaStR_ID,
+    w.unit_display_name,
+    w.operating_status,
+    w.unit_net_nominal_capacity,
+    w.onshore_offshore_type,
+    w.turbine_rotor_diameter,
+    w.unit_commissioning_date,
+    w.final_decommissioning_date,
+    w.planned_commissioning_date,
+    w.latitude_wgs84,
+    w.longitude_wgs84,
+    w.city,
+    IFNULL(c.collected, 0) AS collected
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE w.latitude_wgs84 BETWEEN :minLat AND :maxLat
+  AND w.longitude_wgs84 BETWEEN :minLon AND :maxLon;
+
+
