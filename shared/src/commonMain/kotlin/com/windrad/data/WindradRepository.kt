@@ -108,6 +108,7 @@ class WindradRepository(private val db: WindradDatabase) {
         
         WindmillDetails(
             name = displayName,
+            windparkName = row.wind_plant_name,
             operatingStatus = operatingStatus,
             commissioningDate = commissioningDate,
             householdsFedText = householdsText,
@@ -385,7 +386,7 @@ internal fun calculateHouseholdsFedText(
 internal fun calculateRotorComparisonText(
     diameter: Double?
 ): String {
-    if (diameter == null) return "Wert leider nicht bekannt"
+    if (diameter == null || diameter <= 0.0) return "Wert leider nicht bekannt"
     val radius = diameter / 2.0
     val area = radius * radius * kotlin.math.PI
     val fields = area / 7140.0

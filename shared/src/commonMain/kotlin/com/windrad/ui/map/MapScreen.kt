@@ -46,6 +46,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -507,39 +508,67 @@ fun MapScreen(
 
                     // Header state: selected windmill details or scanning or displaying count
                     if (uiState.selectedWindmill != null) {
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 4.dp),
-                            contentAlignment = Alignment.Center
+                                .padding(top = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = uiState.selectedWindmill.name,
-                                color = AppColors.PureDark,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = (-0.43).sp,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 44.dp)
-                            )
-                            IconButton(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        sheetState = SheetState.COLLAPSED
-                                        delay(300)
-                                        onWindmillSelected(null)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .background(AppColors.LightGray, CircleShape)
-                                    .align(Alignment.CenterEnd)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Schließen",
-                                    tint = AppColors.DarkGray.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(18.dp)
+                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = uiState.selectedWindmill.name,
+                                        color = AppColors.PureDark,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = (-0.43).sp,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        imageVector = Icons.Outlined.Info,
+                                        contentDescription = "Info",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            sheetState = SheetState.COLLAPSED
+                                            delay(300)
+                                            onWindmillSelected(null)
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(AppColors.LightGray, CircleShape)
+                                        .align(Alignment.CenterEnd)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Schließen",
+                                        tint = AppColors.DarkGray.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                            
+                            uiState.selectedWindmill.windparkName?.takeIf { it.isNotBlank() }?.let { windparkName ->
+                                Text(
+                                    text = "Windpark $windparkName",
+                                    color = Color.Gray,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    letterSpacing = (-0.43).sp,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 26.5.dp)
+                                        .offset(y = 10.dp)
+                                        .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 0.dp)
                                 )
                             }
                         }
@@ -610,9 +639,7 @@ fun MapScreen(
                 }
 
                 // Sheet Body Content (revealed when expanded)
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(color = Color.Black.copy(alpha = 0.05f * progress))
-
+                
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -636,7 +663,8 @@ fun MapScreen(
                             
                             val windSpeedForPower = uiState.weatherInfo?.windSpeed ?: (15.0 + (kotlin.math.abs(hash) % 36))
                             
-                            val rotorRadius = (uiState.selectedWindmill.rotorDiameter ?: 126.0) / 2.0
+                            val hasValidRotor = uiState.selectedWindmill.rotorDiameter != null && uiState.selectedWindmill.rotorDiameter > 0.0
+                            val rotorRadius = if (hasValidRotor) uiState.selectedWindmill.rotorDiameter!! / 2.0 else 0.0
                             val area = PI * rotorRadius * rotorRadius
                             val windSpeedMs = windSpeedForPower / 3.6
                             val powerWatts = 0.5 * 1.22 * area * (windSpeedMs * windSpeedMs * windSpeedMs)
@@ -646,6 +674,7 @@ fun MapScreen(
                             val powerStr = when {
                                 opStatus.startsWith("Inaktiv") -> "0 kW (Außer Betrieb)"
                                 opStatus.startsWith("Geplant") -> "0 kW (in Planung)"
+                                !hasValidRotor -> "– kW"
                                 uiState.weatherInfo == null -> "– kW"
                                 else -> "${currentPowerKw.toInt()} kW"
                             }
@@ -661,7 +690,7 @@ fun MapScreen(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                                            .padding(horizontal = 26.5.dp, vertical = 4.dp)
                                     ) {
                                         Row(
                                             modifier = Modifier
@@ -712,6 +741,7 @@ fun MapScreen(
                                 details = uiState.selectedWindmill,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .padding(horizontal = 26.5.dp)
                                     .onGloballyPositioned { coordinates ->
                                         detailsCardHeightDp = with(density) {
                                             coordinates.size.height.toDp()
