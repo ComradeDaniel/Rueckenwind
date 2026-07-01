@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -108,7 +109,7 @@ fun CollectionTurbineDetailsCard(
             valueText = details.rotorDiameterMeters?.let { "$it m" } ?: "–",
             accent = accent,
             isVertical = false,
-            comparisonName = details.rotorFieldsText,
+            comparisonName = details.rotorFieldsTextByLength,
             turbineIcon = {
                 WindTurbineRotorIcon(modifier = Modifier.size(30.dp, 46.dp))
             },
@@ -131,7 +132,7 @@ fun CollectionTurbineDetailsCard(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -255,7 +256,7 @@ private fun DimensionRow(
         }
 
         Column(
-            modifier = Modifier.width(80.dp),
+            modifier = Modifier.width(100.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -455,7 +456,8 @@ private fun CollectionTurbineDetailsCardCollectedPreview() {
                 hubHeightMeters = 166,
                 heightComparisonName = "Kölner Dom",
                 rotorDiameterMeters = 126,
-                rotorFieldsText = "1,7 Fußballfelder",
+                rotorFieldsTextByArea = "1,7 Fußballfelder",
+                rotorFieldsTextByLength = "0,7 Fußballfelder lang",
                 technologyText = "Horizontalläufer",
                 locationText = "An Land",
                 isOnshore = true,
@@ -479,7 +481,8 @@ private fun CollectionTurbineDetailsCardNotCollectedPreview() {
                 hubHeightMeters = 166,
                 heightComparisonName = "Kölner Dom",
                 rotorDiameterMeters = 126,
-                rotorFieldsText = "1,7 Fußballfelder",
+                rotorFieldsTextByArea = "1,7 Fußballfelder",
+                rotorFieldsTextByLength = "0,7 Fußballfelder lang",
                 technologyText = "Horizontalläufer",
                 locationText = "An Land",
                 isOnshore = true,

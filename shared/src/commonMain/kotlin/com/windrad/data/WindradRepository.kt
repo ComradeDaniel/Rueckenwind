@@ -182,7 +182,8 @@ class WindradRepository(private val db: WindradDatabase) {
                 hubHeightMeters = row.turbine_hub_height?.roundToInt(),
                 heightComparisonName = bestSight,
                 rotorDiameterMeters = row.turbine_rotor_diameter?.roundToInt(),
-                rotorFieldsText = calculateRotorFieldsText(row.turbine_rotor_diameter),
+                rotorFieldsTextByArea = calculateRotorFieldsTextArea(row.turbine_rotor_diameter),
+                rotorFieldsTextByLength = calculateRotorFieldsTextDiameter(row.turbine_rotor_diameter),
                 technologyText = formatTechnologyText(row.power_generation_technology),
                 locationText = calculateLocationText(row.onshore_offshore_type),
                 isOnshore = isOnshore,
@@ -534,11 +535,11 @@ internal fun calculateRotorComparisonText(
     diameter: Double?
 ): String {
     if (diameter == null || diameter <= 0.0) return "Wert leider nicht bekannt"
-    val fieldsText = calculateRotorFieldsText(diameter) ?: return "Wert leider nicht bekannt"
+    val fieldsText = calculateRotorFieldsTextArea(diameter) ?: return "Wert leider nicht bekannt"
     return "${diameter.toInt()}m ~ $fieldsText"
 }
 
-internal fun calculateRotorFieldsText(diameter: Double?): String? {
+internal fun calculateRotorFieldsTextArea(diameter: Double?): String? {
     if (diameter == null) return null
     val radius = diameter / 2.0
     val area = radius * radius * kotlin.math.PI
@@ -547,6 +548,16 @@ internal fun calculateRotorFieldsText(diameter: Double?): String? {
     val integerPart = rounded / 10
     val fractionalPart = kotlin.math.abs(rounded % 10)
     return "$integerPart,$fractionalPart Fußballfelder"
+}
+
+// Vergleicht anhand der Fläche
+internal fun calculateRotorFieldsTextDiameter(diameter: Double?): String? {
+    if (diameter == null) return null
+    val lengthRatio = diameter / 105
+    val rounded = (lengthRatio * 10.0).roundToInt()
+    val integerPart = rounded / 10
+    val fractionalPart = kotlin.math.abs(rounded % 10)
+    return "$integerPart,$fractionalPart Fußballfelder lang"
 }
 
 internal fun findBestComparableSight(
