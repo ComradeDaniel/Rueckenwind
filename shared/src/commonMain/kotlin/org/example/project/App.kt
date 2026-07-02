@@ -65,7 +65,10 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
                     onClearSearch = { mapViewModel.clearSearch() },
                     onToggleFavorite = { mapViewModel.toggleFavorite(it) },
-                    onCollectAllClicked = { mapViewModel.collectAllScanned() },
+                    onCollectAllClicked = {
+                        mapViewModel.collectAllScanned()
+                        collectionViewModel.reloadOverview()
+                    },
                     currentDestination = currentDestination,
                     onDestinationSelected = { currentDestination = it },
                     modifier = Modifier.fillMaxSize(),

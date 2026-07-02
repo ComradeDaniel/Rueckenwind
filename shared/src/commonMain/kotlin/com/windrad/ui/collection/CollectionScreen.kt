@@ -2,6 +2,14 @@ package com.windrad.ui.collection
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.layout.ContentScale
+import org.jetbrains.compose.resources.painterResource
+import windrad.shared.generated.resources.Res
+import windrad.shared.generated.resources.grid1
+import windrad.shared.generated.resources.grid2
+import windrad.shared.generated.resources.grid3
+import windrad.shared.generated.resources.grid4
+import windrad.shared.generated.resources.grid5
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -141,20 +149,22 @@ fun CollectionScreen(
 
         // ── Image + card overlap section ──────────────────────────────────────
         Box(modifier = Modifier.fillMaxWidth()) {
-            // Placeholder image (edge-to-edge)
-            Box(
+            // City grid image — brightness depends on collected turbine count
+            val gridImage = when {
+                uiState.collectedCount == 0 -> Res.drawable.grid1
+                uiState.collectedCount < 5  -> Res.drawable.grid2
+                uiState.collectedCount < 10 -> Res.drawable.grid3
+                uiState.collectedCount < 30 -> Res.drawable.grid4
+                else                        -> Res.drawable.grid5
+            }
+            Image(
+                painter = painterResource(gridImage),
+                contentDescription = "Netz-Wachstum",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(218.dp)
-                    .background(AppColors.LightGray),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Netz-Wachstum",
-                    fontSize = 16.sp,
-                    color = AppColors.SubtitleText,
-                )
-            }
+                    .height(218.dp),
+                contentScale = ContentScale.Crop,
+            )
 
             // White card sliding up over the image (starts 19dp before image ends)
             Surface(
