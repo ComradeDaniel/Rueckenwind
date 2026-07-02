@@ -85,7 +85,7 @@ private fun NachhaltigkeitSheetPreview() {
                 collectedCount = 46,
                 co2Value = 845.0,
                 coolingWaterValue = 2457.0,
-                ecoAreaValue = 0.244,
+                ecoAreaValue = 24.38,
             ),
             onDismiss = {},
         )

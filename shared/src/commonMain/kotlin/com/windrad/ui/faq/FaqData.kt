@@ -181,6 +181,69 @@ val FAQ_CONTENT: List<FaqCategory> = listOf(
                 question = "Ein Windrad in meiner Nähe fehlt oder die Daten stimmen nicht. Warum?",
                 answer = "Da wir die Daten direkt aus dem offiziellen Register beziehen, kann es sein, dass der Betreiber die Anlage dort noch nicht oder fehlerhaft eingetragen hat.",
             ),
+            FaqQuestion(
+                id = "app-4",
+                question = "Wie berechnen wir die erzeugte Energie in der Sammlung?",
+                answer = "Wir multiplizieren die Nennleistung jeder gesammelten Anlage (in kW) mit typischen Volllaststunden und summieren das Ergebnis auf. Als Volllaststunden verwenden wir den Durchschnitt 2015–2025 laut Fraunhofer ISE.\n\nDie Formel:\nEnergie (MWh/Jahr) = Σ (Nennleistung in kW ÷ 1.000) × Volllaststunden\n→ Onshore: 1.756 h/Jahr\n→ Offshore: 3.193 h/Jahr\n\nAlle Nennleistungen stammen aus dem Marktstammdatenregister.",
+                urls = listOf(
+                    "https://www.energy-charts.info/downloads.html?l=de&c=DE",
+                ),
+            ),
+            FaqQuestion(
+                id = "app-5",
+                question = "Wie berechnen wir die versorgten Haushalte in der Sammlung?",
+                answer = "Wir teilen die erzeugte Jahresenergie durch den durchschnittlichen Haushaltsstromverbrauch in Deutschland (2.277 kWh/Jahr).\n\nDie Formel:\nHaushalte = Erzeugte Energie (kWh/Jahr) ÷ 2.277 kWh",
+            ),
+            FaqQuestion(
+                id = "app-6",
+                question = "Wie berechnen wir den vermiedenen CO₂-Ausstoß in der Sammlung?",
+                answer = "Wir verwenden den vom Umweltbundesamt ermittelten Faktor für durch Windenergie vermiedene Treibhausgasemissionen. Der Wert basiert auf den Daten für Deutschland 2025: 101,3 Mio. t CO₂ wurden durch ca. 133,7 Mio. MWh Windstrom vermieden.\n\nDie Formel:\nVermiedenes CO₂ (t) = Erzeugte Energie (MWh/Jahr) × 0,75767 t/MWh",
+                urls = listOf(
+                    "https://www.umweltbundesamt.de/daten/umweltzustand-trends/energie/erneuerbare-energien-vermiedene-treibhausgase#methodische-hinweise",
+                    "https://www.umweltbundesamt.de/system/files/medien/479/publikationen/2026-03/UBA_Erneuerbare%20Energien%20in%20Deutschland%202025.pdf",
+                ),
+            ),
+            FaqQuestion(
+                id = "app-7",
+                question = "Wie berechnen wir das eingesparte Kühlwasser in der Sammlung?",
+                answer = "Windenergie benötigt kein Kühlwasser – anders als Kohle-, Gas- oder Kernkraftwerke. Als Vergleichsmaßstab verwenden wir den UBA-Durchschnittswert für den Kühlwasserverbrauch konventioneller Kraftwerke: 6,9 Mrd. m³ für 273,5 Mrd. kWh Einspeisung (Daten 2022).\n\nDie Formel:\nEingespartes Kühlwasser (t) = Erzeugte Energie (MWh/Jahr) × 25,22852 t/MWh",
+                urls = listOf(
+                    "https://www.umweltbundesamt.de/daten/wasser/wasserwirtschaft/nichtoeffentliche-wasserversorgung#hoher-khlwasserbedarf-bei-der-energieversorgung",
+                    "https://www.destatis.de/DE/Presse/Pressemitteilungen/2023/03/PD23_090_43312.html",
+                ),
+            ),
+            FaqQuestion(
+                id = "app-8",
+                question = "Wie berechnen wir die ökologische Ausgleichsfläche in der Sammlung?",
+                answer = "Nach der Bundeskompensationsverordnung müssen Eingriffe in Natur und Landschaft kompensiert werden. Wir rechnen pauschal mit 0,53 ha dauerhaft beanspruchter Fläche pro Anlage (Fundament + Zuwegung) und einem Ausgleichsverhältnis 1:1.\n\nDie Formel:\nAusgleichsfläche (ha) = Anzahl gesammelter Anlagen × 0,53 ha",
+                urls = listOf(
+                    "https://windradfrei-soe.de/flaechenverbrauch-durch-wka-am-cottaer-spitzberg/",
+                ),
+            ),
+            FaqQuestion(
+                id = "app-9",
+                question = "Wie berechnen wir die E-Auto-Vollladungen in der Sammlung?",
+                answer = "Wir teilen die erzeugte Jahresenergie durch die durchschnittliche nutzbare Batteriekapazität eines modernen Elektroautos. Laut EV Database liegt dieser Wert bei 73,6 kWh – das entspricht 13,587 Vollladungen pro MWh.\n\nDie Formel:\nVollladungen = Erzeugte Energie (MWh/Jahr) × 13,58696",
+                urls = listOf(
+                    "https://ev-database.org/de/cheatsheet/useable-battery-capacity-electric-car",
+                ),
+            ),
+            FaqQuestion(
+                id = "app-10",
+                question = "Wie berechnen wir die Windpark-Auslastung in der Sammlung?",
+                answer = "Wir summieren die typischen Volllaststunden aller gesammelten Anlagen – getrennt nach Onshore und Offshore. Die Werte basieren auf dem Durchschnitt 2015–2025 laut Fraunhofer ISE (Energy-Charts).\n\nDie Formel:\nVolllaststunden = Onshore-Anlagen × 1.756 h + Offshore-Anlagen × 3.193 h",
+                urls = listOf(
+                    "https://www.energy-charts.info/downloads.html?l=de&c=DE",
+                ),
+            ),
+            FaqQuestion(
+                id = "app-11",
+                question = "Wie hängt die Windkraftleistung vom Wind ab?",
+                answer = "Die erzeugte Leistung wächst mit der dritten Potenz der Windgeschwindigkeit: Verdoppelt sich der Wind, verachtfacht sich die Leistung. Deshalb sind windstarke Standorte so entscheidend.\n\nDie Formel:\nP = ρ/2 × A × v³\n→ ρ ≈ 1,22 kg/m³ (Luftdichte)\n→ A = π × r² (überstrichene Rotorfläche)\n→ v = Windgeschwindigkeit",
+                urls = listOf(
+                    "https://www.wind-energie.de/fileadmin/redaktion/dokumente/publikationen-oeffentlich/Service/Kita_und_Schulmaterial/Physikbroschuere-UTF-8_FINAL-2013-11-08.pdf",
+                ),
+            ),
         ),
     ),
 )

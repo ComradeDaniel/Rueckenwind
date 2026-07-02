@@ -42,7 +42,7 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
                         mwhValue = kpis.mwhPerYear,
                         co2Value = kpis.co2TonsPerYear,
                         coolingWaterValue = kpis.coolingWaterTons,
-                        ecoAreaValue = kpis.ecoAreaKm2,
+                        ecoAreaValue = kpis.ecoAreaHa,
                         eCarChargesValue = kpis.eCarCharges,
                         fullLoadHoursValue = kpis.fullLoadHours,
                     )

@@ -340,7 +340,7 @@ class WindradRepository(private val db: WindradDatabase) {
             householdsCount = (totalMwh * 1000.0 / AVG_HOUSEHOLD_KWH_PER_YEAR).roundToInt(),
             co2TonsPerYear = totalMwh * CO2_TONS_PER_MWH,
             coolingWaterTons = totalMwh * COOLING_WATER_TONS_PER_MWH,
-            ecoAreaKm2 = collectedCount * ECO_AREA_KM2_PER_TURBINE,
+            ecoAreaHa = collectedCount * ECO_AREA_HA_PER_TURBINE,
             eCarCharges = totalMwh * E_CAR_CHARGES_PER_MWH,
             fullLoadHours = onshoreCount * FULL_LOAD_HOURS_ONSHORE + offshoreCount * FULL_LOAD_HOURS_OFFSHORE.toDouble(),
         )
@@ -658,7 +658,7 @@ internal const val FULL_LOAD_HOURS_OFFSHORE = 3193.0      // h/Jahr  (Ø '15–'
 internal const val AVG_HOUSEHOLD_KWH_PER_YEAR = 2277.0    // kWh/Jahr pro Haushalt
 internal const val CO2_TONS_PER_MWH = 0.75767             // t CO₂/MWh  (UBA 2025)
 internal const val COOLING_WATER_TONS_PER_MWH = 25.22852  // t/MWh  (UBA-Bericht '22)
-internal const val ECO_AREA_KM2_PER_TURBINE = 0.53      // ha/Turbine  (0,53 ha, 1:1-Ausgleich)
+internal const val ECO_AREA_HA_PER_TURBINE = 0.53         // ha/Turbine  (0,53 ha, 1:1-Ausgleich)
 internal const val E_CAR_CHARGES_PER_MWH = 13.58696       // Ladungen/MWh  (Ø 73,6 kWh, EV DB)
 
 data class CollectionKpis(
@@ -667,7 +667,7 @@ data class CollectionKpis(
     val householdsCount: Int,
     val co2TonsPerYear: Double,
     val coolingWaterTons: Double,
-    val ecoAreaKm2: Double,
+    val ecoAreaHa: Double,
     val eCarCharges: Double,
     val fullLoadHours: Double,
 )

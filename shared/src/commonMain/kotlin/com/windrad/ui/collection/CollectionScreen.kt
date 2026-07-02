@@ -432,7 +432,7 @@ private fun CollectionScreenFilledPreview() {
                 mwhValue = 1240.0,
                 co2Value = 845.0,
                 coolingWaterValue = 2457.0,
-                ecoAreaValue = 0.244,
+                ecoAreaValue = 24.38,
                 eCarChargesValue = 16_848.0,
                 fullLoadHoursValue = 80_776.0,
             ),
