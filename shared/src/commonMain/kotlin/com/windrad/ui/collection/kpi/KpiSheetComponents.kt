@@ -492,7 +492,7 @@ private fun WindmillIcon(filled: Boolean, modifier: Modifier = Modifier) {
                 cap = StrokeCap.Round,
             )
             for (angle in listOf(-90f, 30f, 150f)) {
-                val rad = Math.toRadians(angle.toDouble())
+                val rad = angle * kotlin.math.PI / 180.0
                 drawLine(
                     color = color,
                     start = Offset(cx, hubY),
@@ -519,7 +519,7 @@ private fun WindmillIcon(filled: Boolean, modifier: Modifier = Modifier) {
                 cap = StrokeCap.Round,
             )
             for (angle in listOf(-90f, 30f, 150f)) {
-                val rad = Math.toRadians(angle.toDouble())
+                val rad = angle * kotlin.math.PI / 180.0
                 drawLine(
                     color = color,
                     start = Offset(cx, hubY),

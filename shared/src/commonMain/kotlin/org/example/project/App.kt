@@ -129,6 +129,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     onDestinationSelected = { destination ->
                         if (destination != WindradDestination.COLLECTION) {
                             collectionViewModel.resetToKpi()
+                        } else {
+                            collectionViewModel.reloadOverview()
                         }
                         currentDestination = destination
                     },
