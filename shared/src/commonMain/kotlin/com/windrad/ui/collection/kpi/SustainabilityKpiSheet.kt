@@ -3,7 +3,6 @@ package com.windrad.ui.collection.kpi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.windrad.ui.collection.CollectionUiState
-import com.windrad.ui.collection.CollectionViewModel
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
 
@@ -25,7 +24,7 @@ fun NachhaltigkeitSheet(
             value = uiState.co2Value,
             unit = "t CO₂",
             pillColor = AppColors.Yellow,
-            description = "weniger CO₂-Ausstoß - Dank deiner gesammelten Windparks.",
+            description = "weniger CO₂-Ausstoß - Dank deiner gesammelten Windkraftwerke.",
             indicator = { Co2BarChart(value = uiState.co2Value) },
         )
 
@@ -57,7 +56,7 @@ fun NachhaltigkeitSheet(
         MetricRow(
             title = "Ökologische Ausgleichsfläche",
             value = uiState.ecoAreaValue,
-            unit = "km²",
+            unit = "ha",
             pillColor = AppColors.Green,
             description = "für deine gesammelten Windräder, z. B. Aufforstung, Anlegen von Blühwiesen oder Renaturierung von Bächen.",
             indicator = {
@@ -84,9 +83,9 @@ private fun NachhaltigkeitSheetPreview() {
         NachhaltigkeitSheet(
             uiState = CollectionUiState(
                 collectedCount = 46,
-                co2Value = CollectionViewModel.CO2_PLACEHOLDER,
-                coolingWaterValue = CollectionViewModel.COOLING_WATER_PLACEHOLDER,
-                ecoAreaValue = CollectionViewModel.ECO_AREA_PLACEHOLDER,
+                co2Value = 845.0,
+                coolingWaterValue = 2457.0,
+                ecoAreaValue = 24.38,
             ),
             onDismiss = {},
         )

@@ -253,6 +253,18 @@ FROM (
 ORDER BY length(name) ASC
 LIMIT 15;
 
+-- KPI-Aggregation für gesammelte Turbinen: Kapazitätssummen getrennt nach Onshore/Offshore
+selectCollectedCapacitySums:
+SELECT
+    COUNT(*) AS total_collected,
+    SUM(CASE WHEN w.onshore_offshore_type != 'Windkraft auf See' THEN COALESCE(w.unit_net_nominal_capacity, 0.0) ELSE 0.0 END) AS onshore_capacity_kw,
+    SUM(CASE WHEN w.onshore_offshore_type = 'Windkraft auf See' THEN COALESCE(w.unit_net_nominal_capacity, 0.0) ELSE 0.0 END) AS offshore_capacity_kw,
+    SUM(CASE WHEN w.onshore_offshore_type != 'Windkraft auf See' THEN 1 ELSE 0 END) AS onshore_count,
+    SUM(CASE WHEN w.onshore_offshore_type = 'Windkraft auf See' THEN 1 ELSE 0 END) AS offshore_count
+FROM windmill_units w
+INNER JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE c.collected = 1;
+
 selectWindmillsInBoundingBox:
 SELECT
     w.unit_MaStR_ID,

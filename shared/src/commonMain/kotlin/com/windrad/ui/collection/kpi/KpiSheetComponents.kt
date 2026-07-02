@@ -48,7 +48,7 @@ internal const val CO2_BAR_COUNT = 12
 internal const val CO2_METRIC_MAX = 1000.0
 internal const val MWH_METRIC_MAX = 1000.0
 internal const val COOLING_WATER_MAX = 1500.0
-internal const val ECO_AREA_MAX = 120.0
+internal const val ECO_AREA_MAX = 6.0
 internal const val E_CAR_CHARGES_MAX = 80_000.0
 internal const val FULL_LOAD_HOURS_MAX = 3000.0
 

@@ -1,6 +1,7 @@
 package com.windrad.ui.collection.list
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -36,6 +37,9 @@ import androidx.compose.ui.unit.sp
 import com.windrad.ui.collection.kpi.formatGermanNumber
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
+import org.jetbrains.compose.resources.painterResource
+import windrad.shared.generated.resources.Res
+import windrad.shared.generated.resources.stonks
 
 private const val BUNDESWEIT = "Bundesweit"
 
@@ -107,9 +111,10 @@ private fun KpiHeader(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = "📈",
-                fontSize = 40.sp,
+            Image(
+                painter = painterResource(Res.drawable.stonks),
+                contentDescription = null,
+                modifier = Modifier.size(58.dp),
             )
             Spacer(modifier = Modifier.height(4.dp))
             val annotated = buildAnnotatedString {

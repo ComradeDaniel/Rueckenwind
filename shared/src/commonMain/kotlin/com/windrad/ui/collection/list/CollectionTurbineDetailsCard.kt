@@ -33,6 +33,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.windrad.ui.icons.ElbphilharmonieIcon
 import com.windrad.ui.icons.FussballfeldIcon
 import com.windrad.ui.icons.KoelnerDomIcon
 import com.windrad.ui.icons.VertikallaeuferIcon
@@ -47,6 +49,7 @@ import com.windrad.ui.icons.WindTurbineOnshoreIcon
 import com.windrad.ui.icons.WindTurbineRotorDiameter
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
+import com.windrad.util.SightFinder
 
 @Composable
 fun CollectionTurbineDetailsCard(
@@ -112,7 +115,9 @@ fun CollectionTurbineDetailsCard(
                     modifier = Modifier.size(28.dp, 42.dp)
                 )
             },
-            showDomIcon = details.heightComparisonName == "Kölner Dom",
+            icon = details.hubHeightMeters?.let {
+                SightFinder.findNearestSight(it.toDouble())
+            }?.icon,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -133,7 +138,6 @@ fun CollectionTurbineDetailsCard(
                     modifier = Modifier.size(30.dp, 46.dp)
                 )
             },
-            showDomIcon = false,
             showSoccerIcon = true,
         )
 
@@ -251,7 +255,7 @@ private fun DimensionRow(
     isVertical: Boolean,
     comparisonName: String?,
     turbineIcon: @Composable () -> Unit,
-    showDomIcon: Boolean,
+    icon: ImageVector? = null,
     showSoccerIcon: Boolean = false,
 ) {
     Row(
@@ -298,9 +302,9 @@ private fun DimensionRow(
                 fontSize = 22.sp,
                 color = Color.Black,
             )
-            if (showDomIcon) {
+            if (icon != null) {
                 Image(
-                    imageVector = KoelnerDomIcon,
+                    imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(28.dp, 36.dp)
                 )

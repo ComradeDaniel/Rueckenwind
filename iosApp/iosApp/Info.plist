@@ -4,6 +4,8 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleDisplayName</key>
+	<string>Rückenwind</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Wir benötigen deinen Standort, um Windräder in deiner Nähe zu scannen und anzuzeigen.</string>
 </dict>

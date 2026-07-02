@@ -75,10 +75,12 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.windrad.ui.components.InfoAlertDialog
 import com.windrad.ui.icons.MicIcon
 import com.windrad.ui.icons.WindTurbineIcon
 import com.windrad.ui.navigation.WindradBottomBar
@@ -105,9 +107,11 @@ fun MapScreen(
     onCollectAllClicked: () -> Unit,
     currentDestination: WindradDestination,
     onDestinationSelected: (WindradDestination) -> Unit,
+    onFaqClicked: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val screenHeight = maxHeight
@@ -527,12 +531,23 @@ fun MapScreen(
                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(
-                                        imageVector = Icons.Outlined.Info,
-                                        contentDescription = "Info",
-                                        tint = Color.Gray,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.CenterVertically)
+                                            .size(26.dp)
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null,
+                                            ) { showInfoDialog = true },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Info,
+                                            contentDescription = "Info",
+                                            tint = Color.Gray,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                                 IconButton(
                                     onClick = {
@@ -990,6 +1005,21 @@ fun MapScreen(
                 }
             }
         }
+    }
+
+    if (showInfoDialog) {
+        InfoAlertDialog(
+            title = "Hinweis zu den Zahlen",
+            message = "Bei diesen Berechnungen arbeiten wir mit Näherungswerten. Weitere Infos findest Du in unserem FAQ.",
+            confirmText = "Ok",
+            dismissText = "Zum FAQ",
+            onConfirm = { showInfoDialog = false },
+            onDismissRequest = { showInfoDialog = false },
+            onDismissButtonClick = {
+                showInfoDialog = false
+                onFaqClicked()
+            },
+        )
     }
 }
 

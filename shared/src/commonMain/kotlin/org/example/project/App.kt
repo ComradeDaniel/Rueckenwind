@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.windrad.data.rememberLocationPermissionRequester
 import com.windrad.database.DatabaseDriverFactory
 import com.windrad.ui.collection.CollectionScreen
@@ -47,15 +48,14 @@ fun App(driverFactory: DatabaseDriverFactory) {
                 collectionListUiState.route != CollectionRoute.TURBINE_LIST
 
         Box(modifier = Modifier.fillMaxSize()) {
-            // Screen Content - keep all screens in composition tree for caching
+            // Keep screens composed for caching. The map must stay at full size (not size(0.dp)):
+            // MapLibre's Android SurfaceView breaks when resized to zero, especially after backgrounding.
 
-            // Map Screen
+            // Map Screen — always full size underneath other tabs
             Box(
-                modifier = if (currentDestination == WindradDestination.MAP) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier.size(0.dp)
-                }
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(0f)
             ) {
                 MapScreen(
                     uiState = mapUiState,
@@ -65,49 +65,52 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     onSearchResultSelected = { mapViewModel.onSearchResultSelected(it) },
                     onClearSearch = { mapViewModel.clearSearch() },
                     onToggleFavorite = { mapViewModel.toggleFavorite(it) },
-                    onCollectAllClicked = { mapViewModel.collectAllScanned() },
+                    onCollectAllClicked = {
+                        mapViewModel.collectAllScanned()
+                    },
                     currentDestination = currentDestination,
                     onDestinationSelected = { currentDestination = it },
+                    onFaqClicked = { currentDestination = WindradDestination.FAQ },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
 
             // Collection Screen
-            Box(
-                modifier = if (currentDestination == WindradDestination.COLLECTION) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier.size(0.dp)
-                }
-            ) {
-                when (collectionListUiState.route) {
-                    CollectionRoute.KPI -> {
-                        CollectionScreen(
-                            uiState = collectionUiState,
-                            onViewCollectionClicked = { collectionViewModel.openStateOverview() },
-                            onFaqClicked = { currentDestination = WindradDestination.FAQ },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+            if (currentDestination == WindradDestination.COLLECTION) {
+                collectionViewModel.reloadOverview()
 
-                    CollectionRoute.STATE_OVERVIEW -> {
-                        StateOverviewScreen(
-                            uiState = collectionListUiState,
-                            onBackClicked = { collectionViewModel.back() },
-                            onStateSelected = { collectionViewModel.openState(it) },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                Box(
+                    modifier = Modifier.fillMaxSize().zIndex(1f),
+                ) {
+                    when (collectionListUiState.route) {
+                        CollectionRoute.KPI -> {
+                            CollectionScreen(
+                                uiState = collectionUiState,
+                                onViewCollectionClicked = { collectionViewModel.openStateOverview() },
+                                onFaqClicked = { currentDestination = WindradDestination.FAQ },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
 
-                    CollectionRoute.TURBINE_LIST -> {
-                        TurbineListScreen(
-                            uiState = collectionListUiState,
-                            onBackClicked = { collectionViewModel.back() },
-                            onFilterChanged = { collectionViewModel.setFilter(it) },
-                            onSearchQueryChanged = { collectionViewModel.onSearchQueryChanged(it) },
-                            onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        CollectionRoute.STATE_OVERVIEW -> {
+                            StateOverviewScreen(
+                                uiState = collectionListUiState,
+                                onBackClicked = { collectionViewModel.back() },
+                                onStateSelected = { collectionViewModel.openState(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+
+                        CollectionRoute.TURBINE_LIST -> {
+                            TurbineListScreen(
+                                uiState = collectionListUiState,
+                                onBackClicked = { collectionViewModel.back() },
+                                onFilterChanged = { collectionViewModel.setFilter(it) },
+                                onSearchQueryChanged = { collectionViewModel.onSearchQueryChanged(it) },
+                                onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
                 }
             }
@@ -115,7 +118,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
             // FAQ Screen
             Box(
                 modifier = if (currentDestination == WindradDestination.FAQ) {
-                    Modifier.fillMaxSize()
+                    Modifier.fillMaxSize().zIndex(1f)
                 } else {
                     Modifier.size(0.dp)
                 }
@@ -136,6 +139,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
+                        .zIndex(2f)
                         .padding(horizontal = 24.dp)
                         .padding(bottom = 20.dp),
                 )

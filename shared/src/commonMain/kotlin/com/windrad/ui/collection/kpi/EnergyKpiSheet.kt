@@ -6,7 +6,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import com.windrad.ui.collection.CollectionUiState
-import com.windrad.ui.collection.CollectionViewModel
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
 
@@ -26,7 +25,8 @@ fun StromerzeugungSheet(
         val energyDescription = buildAnnotatedString {
             append("reicht aus, um rund ")
             withStyle(SpanStyle(color = AppColors.MapsBlue)) {
-                append("400 Haushalte")
+                append(uiState.householdsCount.toString())
+                append(" Haushalte")
             }
             append(" für ein ganzes Jahr mit grüner Energie zu versorgen.")
         }
@@ -47,7 +47,7 @@ fun StromerzeugungSheet(
             value = uiState.eCarChargesValue,
             unit = "E-Autos",
             pillColor = AppColors.Green,
-            description = "können mit deiner gesammelten Windenergie einmal komplett aufgeladen werden.",
+            description = "können pro Jahr mit deiner gesammelten Windenergie einmal komplett aufgeladen werden.",
             indicator = {
                 BatteryIndicator(
                     filledCount = filledSlotCount(
@@ -66,7 +66,7 @@ fun StromerzeugungSheet(
             value = uiState.fullLoadHoursValue,
             unit = "h",
             pillColor = AppColors.KpiRed,
-            description = "drehen sich deine gesammelten Windräder unter maximaler Auslastung für den Klimaschutz.",
+            description = "drehen sich deine gesammelten Windräder jährlich unter maximaler Auslastung für den Klimaschutz.",
             indicator = {
                 WindmillIndicator(
                     filledCount = filledSlotCount(
@@ -87,9 +87,9 @@ private fun StromerzeugungSheetPreview() {
         StromerzeugungSheet(
             uiState = CollectionUiState(
                 collectedCount = 46,
-                mwhValue = CollectionViewModel.MWH_PLACEHOLDER,
-                eCarChargesValue = CollectionViewModel.E_CAR_CHARGES_PLACEHOLDER,
-                fullLoadHoursValue = CollectionViewModel.FULL_LOAD_HOURS_PLACEHOLDER,
+                mwhValue = 1240.0,
+                eCarChargesValue = 16_848.0,
+                fullLoadHoursValue = 80_776.0,
             ),
             onDismiss = {},
         )

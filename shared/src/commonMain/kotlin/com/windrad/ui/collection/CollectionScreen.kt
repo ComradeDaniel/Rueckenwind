@@ -2,6 +2,14 @@ package com.windrad.ui.collection
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.layout.ContentScale
+import org.jetbrains.compose.resources.painterResource
+import windrad.shared.generated.resources.Res
+import windrad.shared.generated.resources.grid1
+import windrad.shared.generated.resources.grid2
+import windrad.shared.generated.resources.grid3
+import windrad.shared.generated.resources.grid4
+import windrad.shared.generated.resources.grid5
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -116,8 +124,8 @@ fun CollectionScreen(
                     lineHeight = 44.sp,
                 )
                 Text(
-                    text = "Windparks\nentdeckt",
-                    fontSize = 20.sp,
+                    text = "Windkraftwerke entdeckt",
+                    fontSize = 18.sp,
                     color = AppColors.SecondaryLabel,
                     lineHeight = 22.sp,
                 )
@@ -141,20 +149,22 @@ fun CollectionScreen(
 
         // ── Image + card overlap section ──────────────────────────────────────
         Box(modifier = Modifier.fillMaxWidth()) {
-            // Placeholder image (edge-to-edge)
-            Box(
+            // City grid image — brightness depends on collected turbine count
+            val gridImage = when {
+                uiState.collectedCount == 0 -> Res.drawable.grid1
+                uiState.collectedCount < 5  -> Res.drawable.grid2
+                uiState.collectedCount < 10 -> Res.drawable.grid3
+                uiState.collectedCount < 30 -> Res.drawable.grid4
+                else                        -> Res.drawable.grid5
+            }
+            Image(
+                painter = painterResource(gridImage),
+                contentDescription = "Netz-Wachstum",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(218.dp)
-                    .background(AppColors.LightGray),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Netz-Wachstum",
-                    fontSize = 16.sp,
-                    color = AppColors.SubtitleText,
-                )
-            }
+                    .height(218.dp),
+                contentScale = ContentScale.Crop,
+            )
 
             // White card sliding up over the image (starts 19dp before image ends)
             Surface(
@@ -349,7 +359,7 @@ private fun KpiMetricCard(
         ) {
             Text(
                 text = formatMetricValue(value),
-                fontSize = 30.sp,
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = accentColor,
                 lineHeight = 32.sp,
@@ -379,7 +389,7 @@ private fun KpiMetricCard(
 private fun DescriptionText(isEmpty: Boolean, householdsCount: Int) {
     if (isEmpty) {
         Text(
-            text = "Oh! Hier ist noch nicht viel los. Sammle jetzt Windparks, um dein Netzwerk mit grünem Strom zu versorgen.",
+            text = "Oh! Hier ist noch nicht viel los. Sammle jetzt Windkraftwerke, um dein Netzwerk mit grünem Strom zu versorgen.",
             fontSize = 18.sp,
             color = Color.Black,
             lineHeight = 22.sp,
@@ -428,13 +438,13 @@ private fun CollectionScreenFilledPreview() {
             uiState = CollectionUiState(
                 collectedCount = 46,
                 windparksCount = 46,
-                householdsCount = CollectionViewModel.HOUSEHOLDS_PLACEHOLDER,
-                mwhValue = CollectionViewModel.MWH_PLACEHOLDER,
-                co2Value = CollectionViewModel.CO2_PLACEHOLDER,
-                coolingWaterValue = CollectionViewModel.COOLING_WATER_PLACEHOLDER,
-                ecoAreaValue = CollectionViewModel.ECO_AREA_PLACEHOLDER,
-                eCarChargesValue = CollectionViewModel.E_CAR_CHARGES_PLACEHOLDER,
-                fullLoadHoursValue = CollectionViewModel.FULL_LOAD_HOURS_PLACEHOLDER,
+                householdsCount = 4_000,
+                mwhValue = 1240.0,
+                co2Value = 845.0,
+                coolingWaterValue = 2457.0,
+                ecoAreaValue = 24.38,
+                eCarChargesValue = 16_848.0,
+                fullLoadHoursValue = 80_776.0,
             ),
         )
     }
