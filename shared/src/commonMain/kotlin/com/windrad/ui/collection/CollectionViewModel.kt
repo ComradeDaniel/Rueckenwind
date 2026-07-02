@@ -27,10 +27,10 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
     val listUiState: StateFlow<CollectionListUiState> = _listUiState.asStateFlow()
 
     init {
-        loadOverview()
+        reloadOverview()
     }
 
-    private fun loadOverview() {
+    fun reloadOverview() {
         viewModelScope.launch {
             val count = repository.getCollectedCount()
             _uiState.update {

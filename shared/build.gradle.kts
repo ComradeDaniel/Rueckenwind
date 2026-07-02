@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.sqldelight)
-    alias(libs.plugins.s2c)
+    // alias(libs.plugins.s2c)
 }
 
 val isXcodeAvailable = providers.gradleProperty("xcode.available")
@@ -105,6 +105,7 @@ dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
 }
 
+/*
 svgToCompose {
     processor {
         val windradIcons by creating {
@@ -123,4 +124,4 @@ svgToCompose {
             }
         }
     }
-}
+}*/
