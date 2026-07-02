@@ -25,9 +25,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,19 +42,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.windrad.ui.icons.MicIcon
+import com.windrad.ui.components.StaticSearchBar
 import com.windrad.ui.icons.WindTurbineIcon
 import com.windrad.ui.theme.AppColors
 import com.windrad.ui.theme.WindradTheme
@@ -185,73 +177,6 @@ fun TurbineListScreen(
                 .align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = 24.dp),
         )
-    }
-}
-
-@Composable
-private fun StaticSearchBar(
-    query: String,
-    onQueryChanged: (String) -> Unit,
-    focusRequester: FocusRequester,
-    modifier: Modifier = Modifier,
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(44.dp),
-        shape = RoundedCornerShape(22.dp),
-        color = AppColors.LightGray.copy(alpha = 0.6f),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = AppColors.DarkIcon,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Box(modifier = Modifier.weight(1f)) {
-                if (query.isEmpty()) {
-                    Text(
-                        text = "Suchen",
-                        color = AppColors.DarkIcon.copy(alpha = 0.5f),
-                        fontSize = 15.sp,
-                    )
-                }
-                BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChanged,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                    textStyle = TextStyle(
-                        color = AppColors.PureDark,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Normal,
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Search,
-                        showKeyboardOnFocus = true,
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { keyboardController?.hide() }
-                    ),
-                    singleLine = true,
-                    cursorBrush = SolidColor(AppColors.MapsBlue),
-                )
-            }
-            Icon(
-                imageVector = MicIcon,
-                contentDescription = "Sprachsuche",
-                tint = AppColors.DarkIcon,
-                modifier = Modifier.size(20.dp)
-            )
-        }
     }
 }
 
