@@ -73,41 +73,39 @@ fun App(driverFactory: DatabaseDriverFactory) {
             }
 
             // Collection Screen
-            Box(
-                modifier = if (currentDestination == WindradDestination.COLLECTION) {
-                    Modifier.fillMaxSize().zIndex(1f)
-                } else {
-                    Modifier.size(0.dp)
-                }
-            ) {
-                when (collectionListUiState.route) {
-                    CollectionRoute.KPI -> {
-                        CollectionScreen(
-                            uiState = collectionUiState,
-                            onViewCollectionClicked = { collectionViewModel.openStateOverview() },
-                            onFaqClicked = { currentDestination = WindradDestination.FAQ },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+            if (currentDestination == WindradDestination.COLLECTION) {
+                Box(
+                    modifier = Modifier.fillMaxSize().zIndex(1f),
+                ) {
+                    when (collectionListUiState.route) {
+                        CollectionRoute.KPI -> {
+                            CollectionScreen(
+                                uiState = collectionUiState,
+                                onViewCollectionClicked = { collectionViewModel.openStateOverview() },
+                                onFaqClicked = { currentDestination = WindradDestination.FAQ },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
 
-                    CollectionRoute.STATE_OVERVIEW -> {
-                        StateOverviewScreen(
-                            uiState = collectionListUiState,
-                            onBackClicked = { collectionViewModel.back() },
-                            onStateSelected = { collectionViewModel.openState(it) },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                        CollectionRoute.STATE_OVERVIEW -> {
+                            StateOverviewScreen(
+                                uiState = collectionListUiState,
+                                onBackClicked = { collectionViewModel.back() },
+                                onStateSelected = { collectionViewModel.openState(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
 
-                    CollectionRoute.TURBINE_LIST -> {
-                        TurbineListScreen(
-                            uiState = collectionListUiState,
-                            onBackClicked = { collectionViewModel.back() },
-                            onFilterChanged = { collectionViewModel.setFilter(it) },
-                            onSearchQueryChanged = { collectionViewModel.onSearchQueryChanged(it) },
-                            onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        CollectionRoute.TURBINE_LIST -> {
+                            TurbineListScreen(
+                                uiState = collectionListUiState,
+                                onBackClicked = { collectionViewModel.back() },
+                                onFilterChanged = { collectionViewModel.setFilter(it) },
+                                onSearchQueryChanged = { collectionViewModel.onSearchQueryChanged(it) },
+                                onTurbineClicked = { collectionViewModel.toggleTurbineExpanded(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
                 }
             }

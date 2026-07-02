@@ -322,6 +322,30 @@ class WindradRepository(private val db: WindradDatabase) {
         row.collected_count?.toInt() ?: 0
     }
 
+    suspend fun getCollectionKpis(): CollectionKpis = withContext(Dispatchers.Default) {
+        val row = db.windradDbQueries.selectCollectedCapacitySums().executeAsOne()
+        val collectedCount = row.total_collected.toInt()
+        val onshoreCapacityMw = (row.onshore_capacity_kw ?: 0.0) / 1000.0
+        val offshoreCapacityMw = (row.offshore_capacity_kw ?: 0.0) / 1000.0
+        val onshoreCount = (row.onshore_count ?: 0L).toInt()
+        val offshoreCount = (row.offshore_count ?: 0L).toInt()
+
+        val mwhOnshore = onshoreCapacityMw * FULL_LOAD_HOURS_ONSHORE
+        val mwhOffshore = offshoreCapacityMw * FULL_LOAD_HOURS_OFFSHORE
+        val totalMwh = mwhOnshore + mwhOffshore
+
+        CollectionKpis(
+            collectedCount = collectedCount,
+            mwhPerYear = totalMwh,
+            householdsCount = (totalMwh * 1000.0 / AVG_HOUSEHOLD_KWH_PER_YEAR).roundToInt(),
+            co2TonsPerYear = totalMwh * CO2_TONS_PER_MWH,
+            coolingWaterTons = totalMwh * COOLING_WATER_TONS_PER_MWH,
+            ecoAreaKm2 = collectedCount * ECO_AREA_KM2_PER_TURBINE,
+            eCarCharges = totalMwh * E_CAR_CHARGES_PER_MWH,
+            fullLoadHours = onshoreCount * FULL_LOAD_HOURS_ONSHORE + offshoreCount * FULL_LOAD_HOURS_OFFSHORE.toDouble(),
+        )
+    }
+
     suspend fun getCollectionOverview(): CollectionOverviewData = withContext(Dispatchers.Default) {
         val totalRow = db.windradDbQueries.countTotalCollected().executeAsOne()
         val totalCount = totalRow.total.toInt()
@@ -526,8 +550,8 @@ internal fun calculateHouseholdsFedText(
 ): String {
     if (netCapacity == null) return "Versorgt: Wert leider nicht bekannt"
     val isOnshore = onshoreOffshoreType != "Windkraft auf See"
-    val fullLoadHours = if (isOnshore) 1770 else 3278
-    val households = ((netCapacity * fullLoadHours) / 2277.0).roundToInt()
+    val fullLoadHours = if (isOnshore) FULL_LOAD_HOURS_ONSHORE else FULL_LOAD_HOURS_OFFSHORE
+    val households = ((netCapacity * fullLoadHours) / AVG_HOUSEHOLD_KWH_PER_YEAR).roundToInt()
     return "Versorgt ca. $households Haushalte (${netCapacity.toInt()}kW)"
 }
 
@@ -573,13 +597,12 @@ internal fun calculateHeightComparisonText(hubHeight: Double?): String {
     return "${hubHeight.toInt()}m"
 }
 
-// TODO diesen AI slop mal prüfen sieht mir halluziniert aus
 internal fun calculateAnnualEnergyText(
     netCapacity: Double?,
     onshoreOffshoreType: String?,
 ): String {
     if (netCapacity == null) return "Wert leider nicht bekannt"
-    val fullLoadHours = if (onshoreOffshoreType != "Windkraft auf See") 1770 else 3278
+    val fullLoadHours = if (onshoreOffshoreType != "Windkraft auf See") FULL_LOAD_HOURS_ONSHORE else FULL_LOAD_HOURS_OFFSHORE
     val kwh = netCapacity * fullLoadHours
     return when {
         kwh >= 1_000_000 -> {
@@ -597,15 +620,14 @@ internal fun calculateAnnualEnergyText(
     }
 }
 
-// TODO diesen AI slop mal prüfen sieht mir halluziniert aus
 internal fun calculateHouseholdsTextSimple(
     netCapacity: Double?,
     onshoreOffshoreType: String?,
 ): String {
     if (netCapacity == null) return "Versorgt: Wert leider nicht bekannt"
     val isOnshore = onshoreOffshoreType != "Windkraft auf See"
-    val fullLoadHours = if (isOnshore) 1770 else 3278
-    val households = ((netCapacity * fullLoadHours) / 2277.0).roundToInt()
+    val fullLoadHours = if (isOnshore) FULL_LOAD_HOURS_ONSHORE else FULL_LOAD_HOURS_OFFSHORE
+    val households = ((netCapacity * fullLoadHours) / AVG_HOUSEHOLD_KWH_PER_YEAR).roundToInt()
     return "Versorgt ca. ${formatGermanNumber(households.toDouble())} Haushalte"
 }
 
@@ -629,6 +651,26 @@ internal fun calculateLocationText(onshoreOffshoreType: String?): String {
         else -> "Wert leider nicht bekannt"
     }
 }
+
+// ── KPI-Konstanten (Figma-Formelsammlung, Stand 2025/2026) ──────────────────────────
+internal const val FULL_LOAD_HOURS_ONSHORE = 1756.0       // h/Jahr  (Ø '15–'25, Fraunhofer ISE)
+internal const val FULL_LOAD_HOURS_OFFSHORE = 3193.0      // h/Jahr  (Ø '15–'25, Fraunhofer ISE)
+internal const val AVG_HOUSEHOLD_KWH_PER_YEAR = 2277.0    // kWh/Jahr pro Haushalt
+internal const val CO2_TONS_PER_MWH = 0.75767             // t CO₂/MWh  (UBA 2025)
+internal const val COOLING_WATER_TONS_PER_MWH = 25.22852  // t/MWh  (UBA-Bericht '22)
+internal const val ECO_AREA_KM2_PER_TURBINE = 0.53      // ha/Turbine  (0,53 ha, 1:1-Ausgleich)
+internal const val E_CAR_CHARGES_PER_MWH = 13.58696       // Ladungen/MWh  (Ø 73,6 kWh, EV DB)
+
+data class CollectionKpis(
+    val collectedCount: Int,
+    val mwhPerYear: Double,
+    val householdsCount: Int,
+    val co2TonsPerYear: Double,
+    val coolingWaterTons: Double,
+    val ecoAreaKm2: Double,
+    val eCarCharges: Double,
+    val fullLoadHours: Double,
+)
 
 @Serializable
 private data class NominatimResult(

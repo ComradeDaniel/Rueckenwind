@@ -32,22 +32,22 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
 
     fun reloadOverview() {
         viewModelScope.launch {
-            val count = repository.getCollectedCount()
+            val kpis = repository.getCollectionKpis()
             _uiState.update {
-                if (count > 0) {
+                if (kpis.collectedCount > 0) {
                     it.copy(
-                        collectedCount = count,
-                        windparksCount = count,
-                        householdsCount = HOUSEHOLDS_PLACEHOLDER,
-                        mwhValue = MWH_PLACEHOLDER,
-                        co2Value = CO2_PLACEHOLDER,
-                        coolingWaterValue = COOLING_WATER_PLACEHOLDER,
-                        ecoAreaValue = ECO_AREA_PLACEHOLDER,
-                        eCarChargesValue = E_CAR_CHARGES_PLACEHOLDER,
-                        fullLoadHoursValue = FULL_LOAD_HOURS_PLACEHOLDER,
+                        collectedCount = kpis.collectedCount,
+                        windparksCount = kpis.collectedCount,
+                        householdsCount = kpis.householdsCount,
+                        mwhValue = kpis.mwhPerYear,
+                        co2Value = kpis.co2TonsPerYear,
+                        coolingWaterValue = kpis.coolingWaterTons,
+                        ecoAreaValue = kpis.ecoAreaKm2,
+                        eCarChargesValue = kpis.eCarCharges,
+                        fullLoadHoursValue = kpis.fullLoadHours,
                     )
                 } else {
-                    it.copy(collectedCount = 0)
+                    CollectionUiState()
                 }
             }
         }
@@ -238,13 +238,4 @@ class CollectionViewModel(driverFactory: DatabaseDriverFactory) : ViewModel() {
         }
     }
 
-    companion object {
-        const val MWH_PLACEHOLDER = 1240.0
-        const val CO2_PLACEHOLDER = 845.0
-        const val HOUSEHOLDS_PLACEHOLDER = 4_000
-        const val COOLING_WATER_PLACEHOLDER = 2457.0
-        const val ECO_AREA_PLACEHOLDER = 423.0
-        const val E_CAR_CHARGES_PLACEHOLDER = 40000.0
-        const val FULL_LOAD_HOURS_PLACEHOLDER = 1920.0
-    }
 }

@@ -116,7 +116,7 @@ fun CollectionScreen(
                     lineHeight = 44.sp,
                 )
                 Text(
-                    text = "Windparks\nentdeckt",
+                    text = "Windkraftwerke\nentdeckt",
                     fontSize = 20.sp,
                     color = AppColors.SecondaryLabel,
                     lineHeight = 22.sp,
@@ -379,7 +379,7 @@ private fun KpiMetricCard(
 private fun DescriptionText(isEmpty: Boolean, householdsCount: Int) {
     if (isEmpty) {
         Text(
-            text = "Oh! Hier ist noch nicht viel los. Sammle jetzt Windparks, um dein Netzwerk mit grünem Strom zu versorgen.",
+            text = "Oh! Hier ist noch nicht viel los. Sammle jetzt Windkraftwerke, um dein Netzwerk mit grünem Strom zu versorgen.",
             fontSize = 18.sp,
             color = Color.Black,
             lineHeight = 22.sp,
@@ -428,13 +428,13 @@ private fun CollectionScreenFilledPreview() {
             uiState = CollectionUiState(
                 collectedCount = 46,
                 windparksCount = 46,
-                householdsCount = CollectionViewModel.HOUSEHOLDS_PLACEHOLDER,
-                mwhValue = CollectionViewModel.MWH_PLACEHOLDER,
-                co2Value = CollectionViewModel.CO2_PLACEHOLDER,
-                coolingWaterValue = CollectionViewModel.COOLING_WATER_PLACEHOLDER,
-                ecoAreaValue = CollectionViewModel.ECO_AREA_PLACEHOLDER,
-                eCarChargesValue = CollectionViewModel.E_CAR_CHARGES_PLACEHOLDER,
-                fullLoadHoursValue = CollectionViewModel.FULL_LOAD_HOURS_PLACEHOLDER,
+                householdsCount = 4_000,
+                mwhValue = 1240.0,
+                co2Value = 845.0,
+                coolingWaterValue = 2457.0,
+                ecoAreaValue = 0.244,
+                eCarChargesValue = 16_848.0,
+                fullLoadHoursValue = 80_776.0,
             ),
         )
     }
