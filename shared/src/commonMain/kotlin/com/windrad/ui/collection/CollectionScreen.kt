@@ -124,8 +124,8 @@ fun CollectionScreen(
                     lineHeight = 44.sp,
                 )
                 Text(
-                    text = "Windkraftwerke\nentdeckt",
-                    fontSize = 20.sp,
+                    text = "Windkraftwerke entdeckt",
+                    fontSize = 18.sp,
                     color = AppColors.SecondaryLabel,
                     lineHeight = 22.sp,
                 )
@@ -359,7 +359,7 @@ private fun KpiMetricCard(
         ) {
             Text(
                 text = formatMetricValue(value),
-                fontSize = 30.sp,
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = accentColor,
                 lineHeight = 32.sp,

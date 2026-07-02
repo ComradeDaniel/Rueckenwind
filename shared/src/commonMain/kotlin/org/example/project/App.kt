@@ -67,16 +67,18 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     onToggleFavorite = { mapViewModel.toggleFavorite(it) },
                     onCollectAllClicked = {
                         mapViewModel.collectAllScanned()
-                        collectionViewModel.reloadOverview()
                     },
                     currentDestination = currentDestination,
                     onDestinationSelected = { currentDestination = it },
+                    onFaqClicked = { currentDestination = WindradDestination.FAQ },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
 
             // Collection Screen
             if (currentDestination == WindradDestination.COLLECTION) {
+                collectionViewModel.reloadOverview()
+
                 Box(
                     modifier = Modifier.fillMaxSize().zIndex(1f),
                 ) {
