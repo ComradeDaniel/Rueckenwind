@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.milliseconds
 actual class LocationProvider actual constructor(private val driverFactory: DatabaseDriverFactory) {
     @SuppressLint("MissingPermission")
     actual suspend fun getCurrentLocation(): Pair<Double, Double>? {
-        val context = driverFactory.context
+        val context = driverFactory.androidContext
         val hasFine = context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
         val hasCoarse = context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
         
@@ -117,7 +117,7 @@ actual class LocationProvider actual constructor(private val driverFactory: Data
 
     @SuppressLint("MissingPermission")
     actual fun startLocationUpdates(onUpdate: (Double, Double) -> Unit) {
-        val context = driverFactory.context
+        val context = driverFactory.androidContext
         val hasFine = context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
         val hasCoarse = context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
         
@@ -153,7 +153,7 @@ actual class LocationProvider actual constructor(private val driverFactory: Data
 
     actual fun stopLocationUpdates() {
         continuousListener?.let { listener ->
-            val context = driverFactory.context
+            val context = driverFactory.androidContext
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
             try {
                 locationManager?.removeUpdates(listener)

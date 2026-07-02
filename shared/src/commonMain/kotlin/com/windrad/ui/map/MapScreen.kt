@@ -10,7 +10,6 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,10 +46,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -84,6 +79,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.windrad.ui.icons.MicIcon
+import com.windrad.ui.icons.WindTurbineIcon
 import com.windrad.ui.navigation.WindradBottomBar
 import com.windrad.ui.navigation.WindradDestination
 import com.windrad.ui.theme.AppColors
@@ -94,8 +91,6 @@ import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import windrad.shared.generated.resources.Res
-import org.jetbrains.compose.resources.painterResource
-import windrad.shared.generated.resources.wind_turbine_icon
 
 
 @Composable
@@ -859,7 +854,7 @@ fun MapScreen(
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Image(
-                                                    painter = painterResource(Res.drawable.wind_turbine_icon),
+                                                    imageVector = WindTurbineIcon,
                                                     contentDescription = null,
                                                     modifier = Modifier.fillMaxSize()
                                                 )
@@ -1026,42 +1021,6 @@ private val SendIcon: ImageVector
         lineTo(17f, 12f)
         lineTo(2f, 14f)
         lineTo(2.01f, 21f)
-        close()
-    }.build()
-
-private val MicIcon: ImageVector
-    get() = ImageVector.Builder(
-        name = "Mic",
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f
-    ).path(
-        fill = SolidColor(Color.Gray),
-        fillAlpha = 1.0f,
-        strokeAlpha = 1.0f,
-        strokeLineWidth = 0.0f,
-        strokeLineCap = StrokeCap.Butt,
-        pathFillType = PathFillType.NonZero
-    ) {
-        moveTo(12f, 2f)
-        curveTo(10.34f, 2f, 9f, 3.34f, 9f, 5f)
-        lineTo(9f, 11f)
-        curveTo(9f, 12.66f, 10.34f, 14f, 12f, 14f)
-        curveTo(13.66f, 14f, 15f, 12.66f, 15f, 11f)
-        lineTo(15f, 5f)
-        curveTo(15f, 3.34f, 13.66f, 2f, 12f, 2f)
-        close()
-        moveTo(17.3f, 11f)
-        curveTo(17.3f, 14f, 14.76f, 16.1f, 12f, 16.1f)
-        curveTo(9.24f, 16.1f, 6.7f, 14f, 6.7f, 11f)
-        lineTo(5f, 11f)
-        curveTo(5f, 14.42f, 7.72f, 17.23f, 11f, 17.72f)
-        lineTo(11f, 21f)
-        lineTo(13f, 21f)
-        lineTo(13f, 17.72f)
-        curveTo(16.28f, 17.23f, 19f, 14.42f, 19f, 11f)
-        lineTo(17.3f, 11f)
         close()
     }.build()
 

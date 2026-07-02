@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.sqldelight)
+    // alias(libs.plugins.s2c)
 }
 
 val isXcodeAvailable = providers.gradleProperty("xcode.available")
@@ -103,3 +104,24 @@ sqldelight {
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
 }
+
+/*
+svgToCompose {
+    processor {
+        val windradIcons by creating {
+            from(layout.projectDirectory.dir("src/commonMain/composeResources/drawable"))
+            destinationPackage("com.windrad.ui.icons")
+            optimize(false)
+            icons {
+                theme("com.windrad.ui.theme.WindradTheme")
+                minify()
+                exclude(
+                    "animation_icons\\.svg".toRegex(),
+                    "compose-multiplatform\\.xml".toRegex(),
+                )
+                @OptIn(dev.tonholo.s2c.annotations.DelicateSvg2ComposeApi::class)
+                persist()
+            }
+        }
+    }
+}*/

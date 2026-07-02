@@ -13,8 +13,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
-import org.jetbrains.compose.resources.painterResource
-import windrad.shared.generated.resources.*
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import com.windrad.ui.icons.WindTurbineIconWhite
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -89,8 +89,7 @@ fun WindradMap(
     }
 
 
-
-    val turbinePainter = painterResource(Res.drawable.wind_turbine_icon_white)
+    val turbinePainter = rememberVectorPainter(WindTurbineIconWhite)
 
     // WindradPin-Varianten als Painter-Objekte für die MapLibre-Sprite-Registrierung.
     val pinBlue = remember(turbinePainter) { WindradPinPainter(AppColors.MapsBlue, turbinePainter) }

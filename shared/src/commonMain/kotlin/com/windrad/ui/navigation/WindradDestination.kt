@@ -1,13 +1,15 @@
 package com.windrad.ui.navigation
 
-import org.jetbrains.compose.resources.DrawableResource
-import windrad.shared.generated.resources.*
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.windrad.ui.icons.CollectCardsBase
+import com.windrad.ui.icons.Map as MapIcon
+import com.windrad.ui.icons.MessageSquare
 
 enum class WindradDestination(
     val label: String,
-    val icon: DrawableResource
+    val icon: ImageVector
 ) {
-    MAP("Karte", Res.drawable.map),
-    COLLECTION("Sammlung", Res.drawable.collect_cards_base),
-    FAQ("FAQ", Res.drawable.message_square)
+    MAP("Karte", MapIcon),
+    COLLECTION("Sammlung", CollectCardsBase),
+    FAQ("FAQ", MessageSquare)
 }

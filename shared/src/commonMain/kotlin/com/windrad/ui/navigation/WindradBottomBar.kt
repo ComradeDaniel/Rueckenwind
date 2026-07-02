@@ -21,8 +21,6 @@ import com.windrad.ui.theme.AppColors
 
 import com.windrad.ui.map.GlassySurface
 import androidx.compose.ui.draw.shadow
-import org.jetbrains.compose.resources.painterResource
-
 
 @Composable
 fun WindradBottomBar(
@@ -81,7 +79,7 @@ fun WindradBottomBar(
                                     Modifier.size(24.dp)
                                 }
                                 Icon(
-                                    painter = painterResource(destination.icon),
+                                    imageVector = destination.icon,
                                     contentDescription = destination.label,
                                     tint = contentColor,
                                     modifier = iconModifier

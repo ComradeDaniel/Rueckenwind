@@ -133,6 +133,22 @@ SELECT
 FROM windmill_units w
 LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID;
 
+-- Gefundene Einheiten (optional nach Bundesland), alphabetisch nach Gemeinde
+selectFoundTurbinesByState:
+SELECT w.unit_MaStR_ID, w.municipality, w.unit_display_name
+FROM windmill_units w
+INNER JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE c.collected = 1 AND (:state IS NULL OR w.federal_state = :state)
+ORDER BY w.municipality COLLATE NOCASE;
+
+-- Nicht gefundene Einheiten (optional nach Bundesland), alphabetisch nach Gemeinde
+selectNotFoundTurbinesByState:
+SELECT w.unit_MaStR_ID, w.municipality, w.unit_display_name
+FROM windmill_units w
+LEFT JOIN collected_windmill_units c ON w.unit_MaStR_ID = c.unit_MaStR_ID
+WHERE IFNULL(c.collected, 0) = 0 AND (:state IS NULL OR w.federal_state = :state)
+ORDER BY w.municipality COLLATE NOCASE;
+
 -- Liste aller vorhandenen Bundesländer
 selectAllFederalStates:
 SELECT DISTINCT federal_state
